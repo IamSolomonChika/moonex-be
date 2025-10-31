@@ -1,0 +1,1972 @@
+{
+  "info": {
+    "name": "MoonEx API",
+    "description": "Comprehensive DeFi trading and wallet management API for the MoonEx platform",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Create email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on email. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "verify"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on verify. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create social",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/social",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "social"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on social. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Create wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "wallet"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on wallet. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C7db1c5b0F5a8a\",\n  \"signature\": \"0x...\",\n  \"message\": \"Sign this message to authenticate\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on refresh. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Create logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on logout. This endpoint handles user authentication and authorization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on me. This endpoint handles user authentication and authorization.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet Management",
+      "item": [
+        {
+          "name": "Create wallets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on wallets. This endpoint manages wallet operations and transactions.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {wallet Address}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/{walletAddress}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "{walletAddress}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {walletAddress}. This endpoint manages wallet operations and transactions.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/{walletAddress}/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "{walletAddress}",
+                "balance"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on balance. This endpoint manages wallet operations and transactions.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create sign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/sign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "sign"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on sign. This endpoint manages wallet operations and transactions.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "send"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on send. This endpoint manages wallet operations and transactions.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/{walletAddress}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "{walletAddress}",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on transactions. This endpoint manages wallet operations and transactions.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create estimate-gas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallets/estimate-gas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wallets",
+                "estimate-gas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on estimate-gas. This endpoint manages wallet operations and transactions.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trading",
+      "item": [
+        {
+          "name": "Create quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trading/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trading",
+                "quote"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on quote. This endpoint facilitates token swapping and trading operations.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenIn\": {\n    \"address\": \"0xA0b86a33E6441b8e8C7C7b0b8e8e8e8e8e8e8e8e\",\n    \"symbol\": \"USDC\",\n    \"decimals\": 6\n  },\n  \"tokenOut\": {\n    \"address\": \"0x6B175474E89094C44Da98b954EedeAC495271d0F\",\n    \"symbol\": \"DAI\",\n    \"decimals\": 18\n  },\n  \"amountIn\": \"1000000\",\n  \"slippageTolerance\": \"0.5\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create swap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trading/swap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trading",
+                "swap"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on swap. This endpoint facilitates token swapping and trading operations.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenIn\": {\n    \"address\": \"0xA0b86a33E6441b8e8C7C7b0b8e8e8e8e8e8e8e8e\",\n    \"symbol\": \"USDC\",\n    \"decimals\": 6\n  },\n  \"tokenOut\": {\n    \"address\": \"0x6B175474E89094C44Da98b954EedeAC495271d0F\",\n    \"symbol\": \"DAI\",\n    \"decimals\": 18\n  },\n  \"amountIn\": \"1000000\",\n  \"slippageTolerance\": \"0.5\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create routes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trading/routes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trading",
+                "routes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on routes. This endpoint facilitates token swapping and trading operations.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenIn\": {\n    \"address\": \"0xA0b86a33E6441b8e8C7C7b0b8e8e8e8e8e8e8e8e\",\n    \"symbol\": \"USDC\",\n    \"decimals\": 6\n  },\n  \"tokenOut\": {\n    \"address\": \"0x6B175474E89094C44Da98b954EedeAC495271d0F\",\n    \"symbol\": \"DAI\",\n    \"decimals\": 18\n  },\n  \"amountIn\": \"1000000\",\n  \"slippageTolerance\": \"0.5\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create gas-estimate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trading/gas-estimate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trading",
+                "gas-estimate"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on gas-estimate. This endpoint facilitates token swapping and trading operations.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenIn\": {\n    \"address\": \"0xA0b86a33E6441b8e8C7C7b0b8e8e8e8e8e8e8e8e\",\n    \"symbol\": \"USDC\",\n    \"decimals\": 6\n  },\n  \"tokenOut\": {\n    \"address\": \"0x6B175474E89094C44Da98b954EedeAC495271d0F\",\n    \"symbol\": \"DAI\",\n    \"decimals\": 18\n  },\n  \"amountIn\": \"1000000\",\n  \"slippageTolerance\": \"0.5\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Liquidity",
+      "item": [
+        {
+          "name": "Create pools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/liquidity/pools",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "liquidity",
+                "pools"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on pools.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List pools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/liquidity/pools",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "liquidity",
+                "pools"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on pools.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {pool Id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/liquidity/pools/{poolId}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "liquidity",
+                "pools",
+                "{poolId}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {poolId}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create add",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/liquidity/pools/{poolId}/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "liquidity",
+                "pools",
+                "{poolId}",
+                "add"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on add.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create remove",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/liquidity/pools/{poolId}/remove",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "liquidity",
+                "pools",
+                "{poolId}",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on remove.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Yield Farming",
+      "item": [
+        {
+          "name": "Create farms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on farms.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List farms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on farms.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {farm Id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms/{farmId}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms",
+                "{farmId}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {farmId}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create stake",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms/{farmId}/stake",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms",
+                "{farmId}",
+                "stake"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on stake.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create unstake",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms/{farmId}/unstake",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms",
+                "{farmId}",
+                "unstake"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on unstake.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/yield/farms/{farmId}/claim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "yield",
+                "farms",
+                "{farmId}",
+                "claim"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on claim.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Governance",
+      "item": [
+        {
+          "name": "Create proposals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/governance/proposals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "proposals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on proposals.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List proposals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/governance/proposals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "proposals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on proposals.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {proposal Id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/governance/proposals/{proposalId}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "proposals",
+                "{proposalId}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {proposalId}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create vote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/governance/proposals/{proposalId}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "proposals",
+                "{proposalId}",
+                "vote"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on vote.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get votes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/governance/proposals/{proposalId}/votes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "governance",
+                "proposals",
+                "{proposalId}",
+                "votes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on votes.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Limit Orders",
+      "item": [
+        {
+          "name": "Create orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/limit-orders/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "limit-orders",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a CREATE operation on orders.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/limit-orders/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "limit-orders",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on orders.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {order Id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/limit-orders/orders/{orderId}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "limit-orders",
+                "orders",
+                "{orderId}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {orderId}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete {order Id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/limit-orders/orders/{orderId}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "limit-orders",
+                "orders",
+                "{orderId}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a DELETE operation on {orderId}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get {token Out}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/limit-orders/orderbook/{tokenIn}/{tokenOut}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "limit-orders",
+                "orderbook",
+                "{tokenIn}",
+                "{tokenOut}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a GET operation on {tokenOut}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "General",
+      "item": [
+        {
+          "name": "List resource",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "Page number for pagination",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Performs a LIST operation on resource."
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.moonex.io/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

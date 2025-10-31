@@ -1,0 +1,1333 @@
+import { FastifyInstance } from 'fastify';
+import {
+  GovernanceTokenService,
+  VoteDelegationService,
+  TreasuryService,
+  ProposalDiscussionService
+} from '../services/governance-complete';
+import { authMiddleware } from '../middleware/auth';
+
+/**
+ * Complete Governance API Routes
+ */
+export async function governanceCompleteRoutes(fastify: FastifyInstance) {
+  const tokenService = new GovernanceTokenService();
+  const delegationService = new VoteDelegationService();
+  const treasuryService = new TreasuryService();
+  const discussionService = new ProposalDiscussionService();
+
+  // Schema definitions
+  const tokenBalanceSchema = {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      userId: { type: 'string' },
+      tokenAddress: { type: 'string' },
+      tokenSymbol: { type: 'string' },
+      tokenDecimals: { type: 'integer' },
+      balance: { type: 'string' },
+      lockedBalance: { type: 'string' },
+      delegatedBalance: { type: 'string' },
+      receivedDelegated: { type: 'string' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' }
+    }
+  };
+
+  const delegationSchema = {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      delegatorId: { type: 'string' },
+      delegateId: { type: 'string' },
+      tokenAmount: { type: 'string' },
+      isActive: { type: 'boolean' },
+      createdAt: { type: 'string', format: 'date-time' },
+      expiresAt: { type: 'string', format: 'date-time' }
+    }
+  };
+
+  const treasurySchema = {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      description: { type: 'string' },
+      totalBalance: { type: 'string' },
+      availableBalance: { type: 'string' },
+      lockedBalance: { type: 'string' },
+      isActive: { type: 'boolean' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' }
+    }
+  };
+
+  const discussionSchema = {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      proposalId: { type: 'string' },
+      userId: { type: 'string' },
+      content: { type: 'string' },
+      isReply: { type: 'boolean' },
+      parentId: { type: 'string' },
+      upvotes: { type: 'integer' },
+      downvotes: { type: 'integer' },
+      isEdited: { type: 'boolean' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' }
+    }
+  };
+
+  // ============================================================================
+  // GOVERNANCE TOKEN ENDPOINTS
+  // ============================================================================
+
+  /**
+   * GET /api/v1/governance/tokens/balance
+   * Get user's governance token balance
+   */
+  fastify.get('/tokens/balance', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get user governance token balance',
+      tags: ['Governance Tokens'],
+      querystring: {
+        type: 'object',
+        properties: {
+          tokenAddress: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            balance: tokenBalanceSchema
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { tokenAddress } = request.query as { tokenAddress?: string };
+
+      const balance = await tokenService.getTokenBalance(userId, tokenAddress);
+
+      if (!balance) {
+        return reply.status(404).send({
+          success: false,
+          error: 'Token balance not found'
+        });
+      }
+
+      return reply.send({
+        success: true,
+        balance
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get token balance');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/tokens/distribute
+   * Distribute tokens to users (airdrop)
+   */
+  fastify.post('/tokens/distribute', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Distribute tokens to users',
+      tags: ['Governance Tokens'],
+      body: {
+        type: 'object',
+        required: ['recipients', 'tokenAddress', 'tokenSymbol', 'tokenDecimals'],
+        properties: {
+          recipients: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['userId', 'amount'],
+              properties: {
+                userId: { type: 'string' },
+                amount: { type: 'string' }
+              }
+            }
+          },
+          tokenAddress: { type: 'string' },
+          tokenSymbol: { type: 'string' },
+          tokenDecimals: { type: 'integer' },
+          description: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            distributed: { type: 'integer' },
+            errors: {
+              type: 'array',
+              items: { type: 'string' }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { recipients, tokenAddress, tokenSymbol, tokenDecimals, description } = request.body as any;
+
+      const result = await tokenService.distributeTokens(
+        recipients,
+        tokenAddress,
+        tokenSymbol,
+        tokenDecimals
+      );
+
+      return reply.send(result);
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to distribute tokens');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/tokens/lock
+   * Lock tokens for voting
+   */
+  fastify.post('/tokens/lock', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Lock tokens for voting',
+      tags: ['Governance Tokens'],
+      body: {
+        type: 'object',
+        required: ['amount'],
+        properties: {
+          amount: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { amount } = request.body as { amount: string };
+
+      const result = await tokenService.lockTokens(userId, amount);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to lock tokens');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/tokens/unlock
+   * Unlock tokens
+   */
+  fastify.post('/tokens/unlock', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Unlock tokens',
+      tags: ['Governance Tokens'],
+      body: {
+        type: 'object',
+        required: ['amount'],
+        properties: {
+          amount: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { amount } = request.body as { amount: string };
+
+      const result = await tokenService.unlockTokens(userId, amount);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to unlock tokens');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  // ============================================================================
+  // VOTE DELEGATION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /api/v1/governance/delegations
+   * Delegate votes to another user
+   */
+  fastify.post('/delegations', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Delegate votes to another user',
+      tags: ['Vote Delegation'],
+      body: {
+        type: 'object',
+        required: ['delegateId', 'tokenAmount'],
+        properties: {
+          delegateId: { type: 'string' },
+          tokenAmount: { type: 'string' },
+          expiresAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            delegation: delegationSchema
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const delegatorId = (request as any).user.id;
+      const { delegateId, tokenAmount, expiresAt } = request.body as any;
+
+      const result = await delegationService.delegateVotes(
+        delegatorId,
+        delegateId,
+        tokenAmount,
+        expiresAt ? new Date(expiresAt) : undefined
+      );
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to delegate votes');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/delegations/cancel
+   * Cancel vote delegation
+   */
+  fastify.post('/delegations/cancel', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Cancel vote delegation',
+      tags: ['Vote Delegation'],
+      body: {
+        type: 'object',
+        required: ['delegationId'],
+        properties: {
+          delegationId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { delegationId } = request.body as { delegationId: string };
+
+      const result = await delegationService.cancelDelegation(delegationId, userId);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to cancel delegation');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/governance/delegations
+   * Get user's delegations
+   */
+  fastify.get('/delegations', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get user vote delegations',
+      tags: ['Vote Delegation'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            given: {
+              type: 'array',
+              items: delegationSchema
+            },
+            received: {
+              type: 'array',
+              items: delegationSchema
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+
+      const result = await delegationService.getUserDelegations(userId);
+
+      return reply.send({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to get user delegations');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/governance/voting-power
+   * Get user's voting power
+   */
+  fastify.get('/voting-power', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get user voting power',
+      tags: ['Vote Delegation'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            votingPower: {
+              type: 'object',
+              properties: {
+                directPower: { type: 'string' },
+                delegatedToOthers: { type: 'string' },
+                receivedFromOthers: { type: 'string' },
+                totalPower: { type: 'string' }
+              }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+
+      const votingPower = await delegationService.calculateVotingPower(userId);
+
+      if (!votingPower) {
+        return reply.status(404).send({
+          success: false,
+          error: 'Voting power not available'
+        });
+      }
+
+      return reply.send({
+        success: true,
+        votingPower
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to calculate voting power');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  // ============================================================================
+  // TREASURY MANAGEMENT ENDPOINTS
+  // ============================================================================
+
+  /**
+   * GET /api/v1/governance/treasury
+   * Get treasury information
+   */
+  fastify.get('/treasury', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get treasury information',
+      tags: ['Treasury Management'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            treasury: treasurySchema
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const treasury = await treasuryService.getTreasury();
+
+      if (!treasury) {
+        return reply.status(404).send({
+          success: false,
+          error: 'Treasury not found'
+        });
+      }
+
+      return reply.send({
+        success: true,
+        treasury
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get treasury');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/governance/treasury/transactions
+   * Get treasury transactions
+   */
+  fastify.get('/treasury/transactions', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get treasury transactions',
+      tags: ['Treasury Management'],
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+          offset: { type: 'integer', minimum: 0, default: 0 }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            transactions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  type: { type: 'string' },
+                  amount: { type: 'string' },
+                  tokenSymbol: { type: 'string' },
+                  description: { type: 'string' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string', format: 'date-time' }
+                }
+              }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { limit = 50, offset = 0 } = request.query as { limit?: number, offset?: number };
+
+      const transactions = await treasuryService.getTransactions(limit, offset);
+
+      return reply.send({
+        success: true,
+        transactions
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get treasury transactions');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/treasury/transactions
+   * Create treasury transaction
+   */
+  fastify.post('/treasury/transactions', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Create treasury transaction',
+      tags: ['Treasury Management'],
+      body: {
+        type: 'object',
+        required: ['type', 'amount', 'tokenSymbol'],
+        properties: {
+          type: { type: 'string', enum: ['deposit', 'withdrawal', 'allocation', 'refund'] },
+          amount: { type: 'string' },
+          tokenSymbol: { type: 'string' },
+          description: { type: 'string' },
+          metadata: { type: 'object' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            transaction: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                type: { type: 'string' },
+                amount: { type: 'string' },
+                tokenSymbol: { type: 'string' },
+                status: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' }
+              }
+            }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { type, amount, tokenSymbol, description, metadata } = request.body as any;
+
+      const result = await treasuryService.createTransaction(
+        type,
+        amount,
+        tokenSymbol,
+        description,
+        userId,
+        metadata
+      );
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create treasury transaction');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/treasury/allocations
+   * Create treasury allocation
+   */
+  fastify.post('/treasury/allocations', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Create treasury allocation',
+      tags: ['Treasury Management'],
+      body: {
+        type: 'object',
+        required: ['proposalId', 'amount', 'tokenSymbol', 'recipient', 'purpose'],
+        properties: {
+          proposalId: { type: 'string' },
+          amount: { type: 'string' },
+          tokenSymbol: { type: 'string' },
+          recipient: { type: 'string' },
+          purpose: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            allocation: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                proposalId: { type: 'string' },
+                amount: { type: 'string' },
+                status: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' }
+              }
+            }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { proposalId, amount, tokenSymbol, recipient, purpose } = request.body as any;
+
+      const result = await treasuryService.createAllocation(
+        proposalId,
+        amount,
+        tokenSymbol,
+        recipient,
+        purpose,
+        userId
+      );
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create treasury allocation');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/treasury/allocations/:allocationId/execute
+   * Execute treasury allocation
+   */
+  fastify.post('/treasury/allocations/:allocationId/execute', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Execute treasury allocation',
+      tags: ['Treasury Management'],
+      params: {
+        type: 'object',
+        required: ['allocationId'],
+        properties: {
+          allocationId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['txHash'],
+        properties: {
+          txHash: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { allocationId } = request.params as { allocationId: string };
+      const { txHash } = request.body as { txHash: string };
+
+      const result = await treasuryService.executeAllocation(allocationId, txHash);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to execute treasury allocation');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/governance/treasury/performance
+   * Get treasury performance report
+   */
+  fastify.get('/treasury/performance', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get treasury performance report',
+      tags: ['Treasury Management'],
+      querystring: {
+        type: 'object',
+        properties: {
+          period: { type: 'string', enum: ['7d', '30d', '90d', '1y'], default: '30d' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            report: {
+              type: 'object',
+              properties: {
+                totalTransactions: { type: 'integer' },
+                totalVolume: { type: 'string' },
+                allocationSummary: { type: 'object', additionalProperties: { type: 'string' } },
+                transactionTypes: { type: 'object', additionalProperties: { type: 'integer' } },
+                period: { type: 'string' }
+              }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { period = '30d' } = request.query as { period?: '7d' | '30d' | '90d' | '1y' };
+
+      const report = await treasuryService.getPerformanceReport(period);
+
+      if (!report) {
+        return reply.status(404).send({
+          success: false,
+          error: 'Performance report not available'
+        });
+      }
+
+      return reply.send({
+        success: true,
+        report
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get treasury performance report');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  // ============================================================================
+  // PROPOSAL DISCUSSION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * GET /api/v1/governance/proposals/:proposalId/discussions
+   * Get proposal discussions
+   */
+  fastify.get('/proposals/:proposalId/discussions', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get proposal discussions',
+      tags: ['Proposal Discussion'],
+      params: {
+        type: 'object',
+        required: ['proposalId'],
+        properties: {
+          proposalId: { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+          offset: { type: 'integer', minimum: 0, default: 0 }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            discussions: {
+              type: 'array',
+              items: discussionSchema
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { proposalId } = request.params as { proposalId: string };
+      const { limit = 50, offset = 0 } = request.query as { limit?: number, offset?: number };
+
+      const discussions = await discussionService.getDiscussions(proposalId, limit, offset);
+
+      return reply.send({
+        success: true,
+        discussions
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), proposalId }, 'Failed to get proposal discussions');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/proposals/:proposalId/discussions
+   * Create discussion comment
+   */
+  fastify.post('/proposals/:proposalId/discussions', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Create discussion comment',
+      tags: ['Proposal Discussion'],
+      params: {
+        type: 'object',
+        required: ['proposalId'],
+        properties: {
+          proposalId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: {
+          content: { type: 'string', minLength: 1, maxLength: 1000 },
+          parentId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            comment: discussionSchema
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { proposalId } = request.params as { proposalId: string };
+      const userId = (request as any).user.id;
+      const { content, parentId } = request.body as { content: string; parentId?: string };
+
+      const result = await discussionService.createComment(proposalId, userId, content, parentId);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create discussion comment');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/governance/proposals/:proposalId/discussions/:commentId/vote
+   * Vote on discussion comment
+   */
+  fastify.post('/proposals/:proposalId/discussions/:commentId/vote', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Vote on discussion comment',
+      tags: ['Proposal Discussion'],
+      params: {
+        type: 'object',
+        required: ['proposalId', 'commentId'],
+        properties: {
+          proposalId: { type: 'string' },
+          commentId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['voteType'],
+        properties: {
+          voteType: { type: 'string', enum: ['upvote', 'downvote'] }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { commentId } = request.params as { commentId: string };
+      const userId = (request as any).user.id;
+      const { voteType } = request.body as { voteType: 'upvote' | 'downvote' };
+
+      const result = await discussionService.voteComment(commentId, userId, voteType);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to vote on comment');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * PUT /api/v1/governance/proposals/:proposalId/discussions/:commentId/edit
+   * Edit discussion comment
+   */
+  fastify.put('/proposals/:proposalId/discussions/:commentId/edit', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Edit discussion comment',
+      tags: ['Proposal Discussion'],
+      params: {
+        type: 'object',
+        required: ['proposalId', 'commentId'],
+        properties: {
+          proposalId: { type: 'string' },
+          commentId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: {
+          content: { type: 'string', minLength: 1, maxLength: 1000 }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { commentId } = request.params as { commentId: string };
+      const userId = (request as any).user.id;
+      const { content } = request.body as { content: string };
+
+      const result = await discussionService.editComment(commentId, userId, content);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to edit comment');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * DELETE /api/v1/governance/proposals/:proposalId/discussions/:commentId
+   * Delete discussion comment
+   */
+  fastify.delete('/proposals/:proposalId/discussions/:commentId', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Delete discussion comment',
+      tags: ['Proposal Discussion'],
+      params: {
+        type: 'object',
+        required: ['proposalId', 'commentId'],
+        properties: {
+          proposalId: { type: 'string' },
+          commentId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { commentId } = request.params as { commentId: string };
+      const userId = (request as any).user.id;
+
+      const result = await discussionService.deleteComment(commentId, userId);
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error), userId }, 'Failed to delete comment');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+}

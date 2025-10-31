@@ -1,0 +1,21 @@
+# Node modules
+node_modules
+
+# Environment variables
+.env
+
+# Build output
+build/
+
+# OpenSpec files
+openspec/
+
+# Agent and Claude instruction files
+AGENTS.md
+CLAUDE.md
+
+# Documentation files
+PRIVY_INTEGRATION.md
+
+# Generated Prisma files
+/src/generated/prisma

@@ -1,0 +1,507 @@
+import { FastifyInstance } from 'fastify';
+import { TradingBotService } from '../services/trading-bots';
+import { authMiddleware } from '../middleware/auth';
+
+/**
+ * Generic Trading Bot Routes
+ * These routes provide a unified interface for creating different types of trading bots
+ */
+export async function tradingBotGenericRoutes(fastify: FastifyInstance) {
+  const botService = new TradingBotService();
+
+  // Schema definitions
+  const tokenSchema = {
+    type: 'object',
+    required: ['address', 'symbol', 'decimals'],
+    properties: {
+      address: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
+      symbol: { type: 'string', minLength: 1, maxLength: 20 },
+      decimals: { type: 'integer', minimum: 0, maximum: 77 }
+    }
+  };
+
+  const createBotSchema = {
+    type: 'object',
+    required: ['name', 'type', 'tokenIn', 'tokenOut', 'parameters'],
+    properties: {
+      name: { type: 'string', minLength: 1, maxLength: 100 },
+      type: { type: 'string', enum: ['grid', 'dca', 'momentum'] },
+      tokenIn: tokenSchema,
+      tokenOut: tokenSchema,
+      parameters: { type: 'object' },
+      description: { type: 'string', maxLength: 500 }
+    },
+    additionalProperties: false
+  };
+
+  /**
+   * POST /api/v1/trading/bots
+   * Create a trading bot (generic endpoint)
+   * This endpoint allows creating any type of trading bot in a single call
+   */
+  fastify.post('/bots', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Create a trading bot',
+      tags: ['Trading Bots'],
+      body: createBotSchema,
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            bot: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                userId: { type: 'string' },
+                name: { type: 'string' },
+                type: { type: 'string' },
+                tokenIn: tokenSchema,
+                tokenOut: tokenSchema,
+                isActive: { type: 'boolean' },
+                parameters: { type: 'object' },
+                createdAt: { type: 'string', format: 'date-time' }
+              }
+            },
+            error: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { name, type, tokenIn, tokenOut, parameters, description } = request.body as any;
+
+      // Validate parameters based on bot type
+      const validationResult = validateBotParameters(type, parameters);
+      if (!validationResult.valid) {
+        return reply.status(400).send({
+          success: false,
+          error: validationResult.error
+        });
+      }
+
+      const result = await botService.createBot(
+        userId,
+        name,
+        type,
+        tokenIn,
+        tokenOut,
+        parameters
+      );
+
+      if (result.success) {
+        return reply.send(result);
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create trading bot');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/trading/bots/start
+   * Start an existing trading bot
+   */
+  fastify.post('/bots/start', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Start a trading bot',
+      tags: ['Trading Bots'],
+      body: {
+        type: 'object',
+        required: ['botId'],
+        properties: {
+          botId: { type: 'string' }
+        },
+        additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { botId } = request.body as { botId: string };
+
+      // This would typically involve activating the bot
+      // For now, we'll return a success message
+      return reply.send({
+        success: true,
+        message: 'Bot started successfully'
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to start trading bot');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * POST /api/v1/trading/bots/pause
+   * Pause a running trading bot
+   */
+  fastify.post('/bots/pause', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Pause a trading bot',
+      tags: ['Trading Bots'],
+      body: {
+        type: 'object',
+        required: ['botId'],
+        properties: {
+          botId: { type: 'string' }
+        },
+        additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const userId = (request as any).user.id;
+      const { botId } = request.body as { botId: string };
+
+      const result = await botService.stopBot(botId, userId);
+
+      if (result.success) {
+        return reply.send({
+          success: true,
+          message: 'Bot paused successfully'
+        });
+      } else {
+        return reply.status(400).send(result);
+      }
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to pause trading bot');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/trading/bots/templates
+   * Get bot templates for different strategies
+   */
+  fastify.get('/bots/templates', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get trading bot templates',
+      tags: ['Trading Bots'],
+      querystring: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['grid', 'dca', 'momentum'] }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            templates: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  type: { type: 'string' },
+                  description: { type: 'string' },
+                  riskLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
+                  expectedReturn: { type: 'string' },
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      required: { type: 'array', items: { type: 'string' } },
+                      optional: { type: 'array', items: { type: 'string' } },
+                      defaults: { type: 'object' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  }, async (request, reply) => {
+    try {
+      const { type } = request.query as { type?: string };
+
+      const templates = getBotTemplates(type);
+
+      return reply.send({
+        success: true,
+        templates
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get bot templates');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * GET /api/v1/trading/bots/strategies
+   * Get available trading strategies
+   */
+  fastify.get('/bots/strategies', {
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Get available trading strategies',
+      tags: ['Trading Bots'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            strategies: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  riskLevel: { type: 'string' },
+                  bestFor: { type: 'array', items: { type: 'string' } },
+                  marketConditions: { type: 'array', items: { type: 'string' } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const strategies = getTradingStrategies();
+
+      return reply.send({
+        success: true,
+        strategies
+      });
+    } catch (error) {
+      fastify.log.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get trading strategies');
+      return reply.status(500).send({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  });
+
+/**
+ * Validate bot parameters based on type
+ */
+function validateBotParameters(type: string, parameters: any): { valid: boolean; error?: string } {
+    switch (type) {
+      case 'grid':
+        if (!parameters.upperPrice || !parameters.lowerPrice || !parameters.gridCount || !parameters.totalInvestment) {
+          return { valid: false, error: 'Missing required grid trading parameters' };
+        }
+        if (parseFloat(parameters.upperPrice) <= parseFloat(parameters.lowerPrice)) {
+          return { valid: false, error: 'Upper price must be greater than lower price' };
+        }
+        if (parameters.gridCount <= 0) {
+          return { valid: false, error: 'Grid count must be greater than 0' };
+        }
+        break;
+
+      case 'dca':
+        if (!parameters.totalInvestment || !parameters.purchaseInterval || !parameters.purchaseAmount) {
+          return { valid: false, error: 'Missing required DCA parameters' };
+        }
+        if (parameters.purchaseInterval <= 0) {
+          return { valid: false, error: 'Purchase interval must be greater than 0' };
+        }
+        break;
+
+      case 'momentum':
+        if (!parameters.rsiPeriod || !parameters.rsiOverbought || !parameters.rsiOversold || !parameters.investmentAmount) {
+          return { valid: false, error: 'Missing required momentum parameters' };
+        }
+        if (parameters.rsiOverbought <= parameters.rsiOversold) {
+          return { valid: false, error: 'RSI overbought level must be greater than oversold level' };
+        }
+        break;
+
+      default:
+        return { valid: false, error: 'Invalid bot type' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Get bot templates
+   */
+  function getBotTemplates(type?: string): any[] {
+    const allTemplates = [
+      {
+        id: 'grid-conservative',
+        name: 'Conservative Grid',
+        type: 'grid',
+        description: 'Low-risk grid trading with wide price range',
+        riskLevel: 'low',
+        expectedReturn: '5-15% annually',
+        parameters: {
+          required: ['upperPrice', 'lowerPrice', 'gridCount', 'totalInvestment'],
+          optional: ['takeProfit', 'stopLoss'],
+          defaults: {
+            gridCount: 5,
+            takeProfit: null,
+            stopLoss: null
+          }
+        }
+      },
+      {
+        id: 'grid-aggressive',
+        name: 'Aggressive Grid',
+        type: 'grid',
+        description: 'High-frequency grid trading with narrow price range',
+        riskLevel: 'high',
+        expectedReturn: '15-40% annually',
+        parameters: {
+          required: ['upperPrice', 'lowerPrice', 'gridCount', 'totalInvestment'],
+          optional: ['takeProfit', 'stopLoss'],
+          defaults: {
+            gridCount: 20,
+            takeProfit: null,
+            stopLoss: null
+          }
+        }
+      },
+      {
+        id: 'dca-weekly',
+        name: 'Weekly DCA',
+        type: 'dca',
+        description: 'Dollar cost averaging with weekly purchases',
+        riskLevel: 'low',
+        expectedReturn: '8-20% annually',
+        parameters: {
+          required: ['totalInvestment', 'purchaseInterval', 'purchaseAmount'],
+          optional: ['maxPrice', 'minPrice', 'takeProfit', 'stopLoss'],
+          defaults: {
+            purchaseInterval: 168, // 1 week in hours
+            takeProfit: null,
+            stopLoss: null
+          }
+        }
+      },
+      {
+        id: 'momentum-rsi',
+        name: 'RSI Momentum',
+        type: 'momentum',
+        description: 'Momentum trading based on RSI indicators',
+        riskLevel: 'medium',
+        expectedReturn: '10-30% annually',
+        parameters: {
+          required: ['rsiPeriod', 'rsiOverbought', 'rsiOversold', 'investmentAmount'],
+          optional: ['takeProfit', 'stopLoss'],
+          defaults: {
+            rsiPeriod: 14,
+            rsiOverbought: 70,
+            rsiOversold: 30,
+            takeProfit: null,
+            stopLoss: null
+          }
+        }
+      }
+    ];
+
+    if (type) {
+      return allTemplates.filter(template => template.type === type);
+    }
+
+    return allTemplates;
+  }
+
+  /**
+   * Get trading strategies
+   */
+  function getTradingStrategies(): any[] {
+    return [
+      {
+        type: 'grid',
+        name: 'Grid Trading',
+        description: 'Place buy and sell orders at regular price intervals within a range',
+        riskLevel: 'medium',
+        bestFor: ['sideways markets', 'volatile markets with range'],
+        marketConditions: ['ranging', 'moderately volatile']
+      },
+      {
+        type: 'dca',
+        name: 'Dollar Cost Averaging',
+        description: 'Invest fixed amounts at regular intervals regardless of price',
+        riskLevel: 'low',
+        bestFor: ['long-term investing', 'reducing volatility risk'],
+        marketConditions: ['bull markets', 'bear markets', 'sideways markets']
+      },
+      {
+        type: 'momentum',
+        name: 'Momentum Trading',
+        description: 'Follow market trends using technical indicators',
+        riskLevel: 'high',
+        bestFor: ['trending markets', 'active trading'],
+        marketConditions: ['strong trends', 'high volatility']
+      }
+    ];
+  }
+}

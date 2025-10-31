@@ -1,0 +1,563 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for storing user information
+model User {
+  id                String   @id @default(cuid())
+  privyUserId      String   @unique // Privy user ID
+  email            String   @unique
+  name             String?
+  avatar           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  wallets          Wallet[]
+  sessions         Session[]
+  transactions     Transaction[]
+  positions        LiquidityPosition[]
+  farmPositions    FarmPosition[]
+  votes            Vote[]
+  limitOrders      LimitOrder[]
+  trades           Trade[]
+  stopLossOrders   StopLossOrder[]
+  stopLossTrades   StopLossTrade[]
+  tradingBots      TradingBot[]
+  botTrades        BotTrade[]
+  tokenBalances    TokenBalance[]
+  delegationsAsDelegator VoteDelegation[] @relation("DelegationDelegator")
+  delegationsAsDelegate   VoteDelegation[] @relation("DelegationDelegate")
+  treasuryTransactions TreasuryTransaction[]
+  proposalDiscussions     ProposalDiscussion[]
+
+  @@map("users")
+}
+
+// Session model for JWT token management
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Wallet model for storing user wallets
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String
+  address     String   @unique
+  type        String   // 'embedded', 'external'
+  chainId     String   // Blockchain chain ID
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  
+  @@map("wallets")
+}
+
+// Transaction model for storing transaction history
+model Transaction {
+  id            String   @id @default(cuid())
+  userId        String
+  walletId      String
+  hash          String   @unique
+  fromAddress   String
+  toAddress     String
+  amount        String
+  tokenSymbol   String
+  tokenDecimals Int      @default(18)
+  status        String   // 'pending', 'completed', 'failed'
+  gasUsed       String?
+  gasPrice      String?
+  blockNumber   BigInt?
+  createdAt     DateTime @default(now())
+  confirmedAt   DateTime?
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@map("transactions")
+}
+
+// Liquidity Pool model for AMM pools
+model LiquidityPool {
+  id                String   @id @default(cuid())
+  address           String   @unique // Pool contract address
+  token0Address     String   // First token address
+  token1Address     String   // Second token address
+  token0Symbol      String   // First token symbol
+  token1Symbol      String   // Second token symbol
+  token0Decimals    Int      // First token decimals
+  token1Decimals    Int      // Second token decimals
+  reserve0          String   // Reserve of token0
+  reserve1          String   // Reserve of token1
+  totalSupply       String   // Total LP token supply
+  fee               String   // Trading fee (e.g., "0.003" for 0.3%)
+  isActive          Boolean  @default(true)
+  volume24h         String   @default("0")
+  fee24h            String   @default("0")
+  tvl               String   @default("0")
+  apr               String   @default("0")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  positions         LiquidityPosition[]
+  swaps             Swap[]
+
+  @@map("liquidity_pools")
+}
+
+// Liquidity Position model for user positions in pools
+model LiquidityPosition {
+  id                String   @id @default(cuid())
+  userId            String
+  poolId            String
+  lpTokenBalance    String   // LP tokens owned
+  token0Amount      String   // Amount of token0 deposited
+  token1Amount      String   // Amount of token1 deposited
+  valueUSD          String   // Position value in USD
+  impermanentLoss   String   @default("0") // Impermanent loss percentage
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pool              LiquidityPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, poolId])
+  @@map("liquidity_positions")
+}
+
+// Swap model for tracking DEX swaps
+model Swap {
+  id                String   @id @default(cuid())
+  userId            String?
+  poolId            String
+  transactionHash   String   @unique
+  tokenInAddress    String
+  tokenOutAddress   String
+  tokenInSymbol     String
+  tokenOutSymbol    String
+  tokenInAmount     String
+  tokenOutAmount    String
+  price             String   // Execution price
+  fee               String   // Trading fee paid
+  slippage          String   // Price impact percentage
+  status            String   // 'pending', 'completed', 'failed'
+  blockNumber       BigInt?
+  createdAt         DateTime @default(now())
+  confirmedAt       DateTime?
+
+  // Relations
+  pool              LiquidityPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@map("swaps")
+}
+
+// Yield Farm model for farming opportunities
+model YieldFarm {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  poolId            String
+  rewardTokenAddress String
+  rewardTokenSymbol  String
+  rewardRate        String   // Rewards per second
+  totalStaked       String   // Total LP tokens staked
+  apr               String   // Annual percentage rate
+  isActive          Boolean  @default(true)
+  startsAt          DateTime
+  endsAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  positions         FarmPosition[]
+
+  @@map("yield_farms")
+}
+
+// Farm Position model for user staking in farms
+model FarmPosition {
+  id                String   @id @default(cuid())
+  userId            String
+  farmId            String
+  amountStaked      String   // LP tokens staked
+  pendingRewards    String   // Unclaimed rewards
+  aprAtStake        String   // APR at time of staking
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm              YieldFarm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, farmId])
+  @@map("farm_positions")
+}
+
+// Governance Proposal model
+model Proposal {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  proposerId        String
+  votingStartsAt    DateTime
+  votingEndsAt      DateTime
+  quorum            String   // Minimum voting power required
+  approvalThreshold String   // Minimum approval percentage
+  forVotes          String   @default("0")
+  againstVotes      String   @default("0")
+  abstainVotes      String   @default("0")
+  executed          Boolean  @default(false)
+  executedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  votes             Vote[]
+  discussions      ProposalDiscussion[]
+
+  @@map("proposals")
+}
+
+// Vote model for governance voting
+model Vote {
+  id                String   @id @default(cuid())
+  userId            String
+  proposalId        String
+  choice            String   // 'for', 'against', 'abstain'
+  votingPower       String
+  createdAt         DateTime @default(now())
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposal          Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, proposalId])
+  @@map("votes")
+}
+
+// Audit log for tracking important actions
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // 'login', 'wallet_created', 'transaction_sent', etc.
+  metadata  Json?    // Additional metadata as JSON
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// Limit Order model for advanced trading
+model LimitOrder {
+  id                String   @id @default(cuid())
+  userId            String
+  tokenInAddress    String   // Token to sell
+  tokenInSymbol     String
+  tokenInDecimals   Int
+  tokenOutAddress   String   // Token to buy
+  tokenOutSymbol    String
+  tokenOutDecimals  Int
+  amountIn          String   // Amount of tokenIn to sell
+  amountOutMin      String   // Minimum amount of tokenOut to receive
+  price             String   // Target price (tokenOut/tokenIn)
+  type              String   // 'buy' or 'sell'
+  status            String   // 'pending', 'filled', 'cancelled', 'expired'
+  filledAmountIn    String   @default("0") // Amount of tokenIn already filled
+  filledAmountOut   String   @default("0") // Amount of tokenOut already received
+  gasPrice          String?  // Gas price for execution
+  gasLimit          String?  // Gas limit for execution
+  slippageTolerance String   @default("0.005") // 0.5%
+  expiresAt         DateTime // Order expiration time
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  filledAt          DateTime?
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades            Trade[]  @relation("OrderTrades")
+
+  @@map("limit_orders")
+}
+
+// Trade model for executed limit orders
+model Trade {
+  id                String   @id @default(cuid())
+  orderId           String   // Reference to the limit order
+  userId            String
+  tokenInAddress    String
+  tokenInSymbol     String
+  tokenOutAddress   String
+  tokenOutSymbol    String
+  amountIn          String
+  amountOut         String
+  price             String   // Execution price
+  fee               String   // Trading fee
+  transactionHash   String   @unique
+  blockNumber       BigInt?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order             LimitOrder @relation("OrderTrades", fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("trades")
+}
+
+// Stop Loss Order model for advanced trading
+model StopLossOrder {
+  id                String   @id @default(cuid())
+  userId            String
+  tokenInAddress    String   // Token to sell
+  tokenInSymbol     String
+  tokenInDecimals   Int
+  tokenOutAddress   String   // Token to buy
+  tokenOutSymbol    String
+  tokenOutDecimals  Int
+  amountIn          String   // Amount of tokenIn to sell
+  stopPrice         String   // Stop price (tokenOut/tokenIn)
+  type              String   // 'stop-loss' or 'take-profit'
+  status            String   // 'active', 'triggered', 'cancelled', 'expired'
+  triggeredPrice    String?  // Actual price when triggered
+  filledAmountIn    String   @default("0") // Amount of tokenIn already filled
+  filledAmountOut   String   @default("0") // Amount of tokenOut already received
+  trailAmount       String?  // Trail amount for trailing stops
+  trailPercentage   String?  // Trail percentage for trailing stops
+  gasPrice          String?  // Gas price for execution
+  gasLimit          String?  // Gas limit for execution
+  slippageTolerance String   @default("0.01") // 1%
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  triggeredAt       DateTime?
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades            StopLossTrade[] @relation("StopLossTrades")
+
+  @@map("stop_loss_orders")
+}
+
+// Stop Loss Trade model for executed stop loss orders
+model StopLossTrade {
+  id                String   @id @default(cuid())
+  orderId           String   // Reference to the stop loss order
+  userId            String
+  tokenInAddress    String
+  tokenInSymbol     String
+  tokenOutAddress   String
+  tokenOutSymbol    String
+  amountIn          String
+  amountOut         String
+  price             String   // Execution price
+  fee               String   // Trading fee
+  transactionHash   String   @unique
+  blockNumber       BigInt?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order             StopLossOrder @relation("StopLossTrades", fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("stop_loss_trades")
+}
+
+// Trading Bot model for automated trading strategies
+model TradingBot {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  type              String   // 'grid', 'dca', 'momentum'
+  tokenInAddress    String   // Token to buy/sell
+  tokenInSymbol     String
+  tokenInDecimals   Int
+  tokenOutAddress   String   // Token to buy/sell with
+  tokenOutSymbol    String
+  tokenOutDecimals  Int
+  isActive          Boolean  @default(true)
+  parameters        Json     // Bot-specific parameters
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades            BotTrade[]
+
+  @@map("trading_bots")
+}
+
+// Bot Trade model for trades executed by trading bots
+model BotTrade {
+  id                String   @id @default(cuid())
+  botId             String   // Reference to the trading bot
+  userId            String
+  type              String   // 'buy' or 'sell'
+  tokenInAddress    String
+  tokenInSymbol     String
+  tokenInDecimals   Int
+  tokenOutAddress   String
+  tokenOutSymbol    String
+  tokenOutDecimals  Int
+  amountIn          String
+  amountOut         String
+  price             String   // Execution price
+  fee               String   // Trading fee
+  timestamp         DateTime @default(now())
+  strategy          String   // Strategy used for this trade
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bot               TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@map("bot_trades")
+}
+
+// Token Balance model for governance token tracking
+model TokenBalance {
+  id                String   @id @default(cuid())
+  userId            String
+  tokenAddress      String   // Governance token contract address
+  tokenSymbol       String   // Token symbol (e.g., "MOON")
+  tokenDecimals     Int      // Token decimals
+  balance           String   // Current balance
+  lockedBalance     String   @default("0") // Locked for voting/delegation
+  delegatedBalance  String   @default("0") // Delegated to others
+  receivedDelegated String   @default("0") // Received from others
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tokenAddress])
+  @@map("token_balances")
+}
+
+// Vote Delegation model
+model VoteDelegation {
+  id          String   @id @default(cuid())
+  delegatorId String   // User who is delegating their votes
+  delegateId  String   // User who receives the delegated votes
+  tokenAmount String  // Amount of tokens delegated
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime? // Optional expiration
+
+  // Relations
+  delegator   User     @relation("DelegationDelegator", fields: [delegatorId], references: [id], onDelete: Cascade)
+  delegate    User     @relation("DelegationDelegate", fields: [delegateId], references: [id], onDelete: Cascade)
+
+  @@unique([delegatorId, delegateId])
+  @@map("vote_delegations")
+}
+
+// Treasury model for managing protocol funds
+model Treasury {
+  id                String   @id @default(cuid())
+  name              String   @default("MoonEx Treasury")
+  description       String?
+  totalBalance      String   @default("0") // Total treasury balance
+  availableBalance  String   @default("0") // Available for allocation
+  lockedBalance     String   @default("0") // Locked in active proposals
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  transactions      TreasuryTransaction[]
+  allocations        TreasuryAllocation[]
+
+  @@map("treasuries")
+}
+
+// Treasury Transaction model
+model TreasuryTransaction {
+  id          String   @id @default(cuid())
+  treasuryId  String
+  userId      String? // User who initiated the transaction (if applicable)
+  type        String   // 'deposit', 'withdrawal', 'allocation', 'refund'
+  amount      String   // Transaction amount
+  tokenSymbol String   // Token symbol
+  description String? // Transaction description
+  metadata    Json?    // Additional metadata
+  txHash      String?  // Blockchain transaction hash
+  status      String   @default("pending") // 'pending', 'completed', 'failed'
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  // Relations
+  treasury    Treasury @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("treasury_transactions")
+}
+
+// Treasury Allocation model for tracking fund allocations
+model TreasuryAllocation {
+  id            String   @id @default(cuid())
+  treasuryId    String
+  proposalId    String   // Related proposal
+  amount        String   // Allocated amount
+  tokenSymbol   String   // Token symbol
+  recipient     String   // Recipient address
+  purpose       String   // Purpose of allocation
+  status        String   @default("pending") // 'pending', 'approved', 'executed', 'refunded'
+  txHash        String?  // Blockchain transaction hash
+  approvedBy    String   // User who approved the allocation
+  createdAt     DateTime @default(now())
+  executedAt    DateTime?
+
+  // Relations
+  treasury      Treasury @relation(fields: [treasuryId], references: [id], onDelete: Cascade)
+
+  @@map("treasury_allocations")
+}
+
+// Proposal Discussion model for community discussions
+model ProposalDiscussion {
+  id          String   @id @default(cuid())
+  proposalId  String
+  userId      String
+  content     String   // Discussion content
+  isReply     Boolean  @default(false) // Whether this is a reply to another comment
+  parentId    String?  // Parent comment ID if this is a reply
+  upvotes     Int      @default(0)
+  downvotes   Int      @default(0)
+  isEdited    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      ProposalDiscussion? @relation("DiscussionReplies", fields: [parentId], references: [id])
+  replies     ProposalDiscussion[] @relation("DiscussionReplies")
+
+  @@map("proposal_discussions")
+}
