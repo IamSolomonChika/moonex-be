@@ -119,28 +119,89 @@ cp .env.example .env
 Edit the `.env` file with your configuration:
 
 ```env
-# Required - Database Configuration
-DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
+# =============================================================================
+# MoonEx DEX Backend Environment Configuration
+# =============================================================================
 
-# Required - Privy Configuration (get from https://dashboard.privy.io)
-PRIVY_APP_ID=your_app_id_here
-PRIVY_APP_SECRET=your_app_secret_here
-
-# Required - JWT Configuration
-JWT_SECRET=your_jwt_secret_here_change_in_production
-JWT_EXPIRES_IN=7d
-
-# Optional - Server Configuration
+# Server Configuration
 PORT=3000
 NODE_ENV=development
 
-# Optional - Governance Configuration
+# Database Configuration
+DATABASE_URL="file:./dev.db"
+
+# =============================================================================
+# Privy Authentication & Wallet Configuration (Required)
+# =============================================================================
+# Get these values from your Privy dashboard at https://dashboard.privy.io
+PRIVY_APP_ID=your_privy_app_id_here
+PRIVY_APP_SECRET=your_privy_app_secret_here
+
+# Optional: Custom Privy API URLs (defaults provided)
+PRIVY_WALLET_API_URL=https://api.privy.io
+PRIVY_AUTH_API_URL=https://auth.privy.io
+
+# =============================================================================
+# JWT Configuration (Required)
+# =============================================================================
+# Secret for signing JWT tokens - use a strong, random string in production
+JWT_SECRET=your_jwt_secret_here_change_in_production_make_it_at_least_32_characters
+JWT_EXPIRES_IN=7d
+
+# =============================================================================
+# Blockchain Configuration (Optional)
+# =============================================================================
+# Default blockchain network for operations
+DEFAULT_CHAIN_ID=1
+DEFAULT_RPC_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+
+# =============================================================================
+# DEX Configuration (Optional)
+# =============================================================================
+# Uniswap V2 Router contract address (Ethereum Mainnet)
+UNISWAP_V2_ROUTER=0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+
+# Factory contract address (if custom implementation)
+FACTORY_ADDRESS=0x0000000000000000000000000000000000000000
+
+# Gas price configuration
+GAS_PRICE_WEI=20000000000
+MAX_GAS_LIMIT=500000
+
+# =============================================================================
+# Governance Configuration (Optional)
+# =============================================================================
+# Governance token contract address
 GOVERNANCE_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
 GOVERNANCE_TOKEN_SYMBOL=MOON
 GOVERNANCE_TOKEN_DECIMALS=18
+
+# Quorum and voting thresholds
 QUORUM_PERCENTAGE=4
 APPROVAL_THRESHOLD_PERCENTAGE=51
 VOTING_PERIOD_DAYS=7
+
+# =============================================================================
+# Security Configuration (Optional)
+# =============================================================================
+# Rate limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# CORS configuration
+CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+
+# =============================================================================
+# Monitoring & Logging (Optional)
+# =============================================================================
+# Log level: 'error', 'warn', 'info', 'debug'
+LOG_LEVEL=info
+
+# Enable request logging
+ENABLE_REQUEST_LOGGING=true
+
+# Error tracking (e.g., Sentry)
+SENTRY_DSN=your_sentry_dsn_here
 ```
 
 See [Environment Variables](#environment-variables) for a complete list of all available configuration options.
