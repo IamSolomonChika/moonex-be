@@ -1,7 +1,7 @@
 import { AMMCalculator, SwapQuote } from './amm-calculator';
 import { getDatabase } from '../../config/database';
 import logger from '../../utils/logger';
-import type { LiquidityPool as DbLiquidityPool, Swap as DbSwap } from '../../generated/prisma';
+import type { LiquidityPool as DbLiquidityPool, Swap as DbSwap } from '@prisma/client';
 
 /**
  * Token information interface

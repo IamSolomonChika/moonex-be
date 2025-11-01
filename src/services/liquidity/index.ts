@@ -1,7 +1,7 @@
 import { AMMCalculator } from '../trading/amm-calculator';
 import { getDatabase } from '../../config/database';
 import logger from '../../utils/logger';
-import type { LiquidityPool as DbLiquidityPool, LiquidityPosition as DbLiquidityPosition } from '../../generated/prisma';
+import type { LiquidityPool as DbLiquidityPool, LiquidityPosition as DbLiquidityPosition } from '@prisma/client';
 
 /**
  * Token information interface

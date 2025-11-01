@@ -1,7 +1,7 @@
 import { getDatabase } from '../../config/database';
 import logger from '../../utils/logger';
 import { Decimal } from 'decimal.js';
-import type { StopLossOrder as DbStopLossOrder, StopLossTrade as DbStopLossTrade } from '../../generated/prisma';
+import type { StopLossOrder as DbStopLossOrder, StopLossTrade as DbStopLossTrade } from '@prisma/client';
 
 /**
  * Token interface

@@ -3,7 +3,7 @@ import { config } from '../config';
 import { User } from './auth';
 import { getDatabase, executeTransaction } from '../config/database';
 import logger from '../utils/logger';
-import type { Wallet as DbWallet, Transaction as DbTransaction } from '../generated/prisma';
+import type { Wallet as DbWallet, Transaction as DbTransaction } from '@prisma/client';
 
 /**
  * Wallet interface

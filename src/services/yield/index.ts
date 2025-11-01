@@ -1,6 +1,6 @@
 import { getDatabase } from '../../config/database';
 import logger from '../../utils/logger';
-import type { YieldFarm as DbYieldFarm, FarmPosition as DbFarmPosition, LiquidityPool as DbLiquidityPool } from '../../generated/prisma';
+import type { YieldFarm as DbYieldFarm, FarmPosition as DbFarmPosition, LiquidityPool as DbLiquidityPool } from '@prisma/client';
 
 /**
  * Yield farm interface

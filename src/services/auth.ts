@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { getDatabase, executeTransaction } from '../config/database';
 import logger from '../utils/logger';
-import type { User as DbUser, Session } from '../generated/prisma';
+import type { User as DbUser, Session } from '@prisma/client';
 
 /**
  * User interface for authentication

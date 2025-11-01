@@ -1,6 +1,6 @@
 import { getDatabase } from '../../config/database';
 import logger from '../../utils/logger';
-import type { Proposal as DbProposal, Vote as DbVote } from '../../generated/prisma';
+import type { Proposal as DbProposal, Vote as DbVote } from '@prisma/client';
 
 /**
  * Proposal interface
