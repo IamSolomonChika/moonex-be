@@ -2,10 +2,10 @@
   "name": "moonex_be",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node build/index.js",
+    "start": "pnpm run build && node build/index.js",
     "dev": "pnpm build && pnpm start",
     "test": "jest",
     "test:watch": "jest --watch",
