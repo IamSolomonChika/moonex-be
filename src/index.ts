@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { config } from './config';
 import { initializeDatabase, disconnectDatabase, checkDatabaseHealth } from './config/database';
+import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth';
 import { walletRoutes } from './routes/wallets';
 import { tradingRoutes } from './routes/trading';
@@ -31,6 +32,15 @@ const fastify = Fastify({
       }
     }
   },
+});
+
+// Register CORS with wildcard configuration for integration purposes
+fastify.register(cors, {
+  origin: '*', // Allow all origins for integration purposes
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Common HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'], // Common headers
+  credentials: false, // Set to false for wildcard origin compatibility
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 });
 
 // Database will be initialized asynchronously in start() function

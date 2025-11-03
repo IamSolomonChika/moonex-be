@@ -19,6 +19,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.18.1",
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "@prisma/client": "^6.17.1",
     "@privy-io/react-auth": "^3.3.0",
     "@privy-io/server-auth": "^1.32.5",
