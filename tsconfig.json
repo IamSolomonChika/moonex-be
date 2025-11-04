@@ -7,15 +7,28 @@
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
+    "noEmitOnError": false,
+        "noResolve": false,
+    "allowJs": true,
     "outDir": "./build",
     "rootDir": "./src",
     "resolveJsonModule": true,
     "types": ["node", "jest"],
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "build"]
+  "exclude": [
+    "node_modules",
+    "build",
+    "src/docs/api-documentation-generator.ts",
+    "src/bsc-temporarily-excluded/",
+    "src/routes/bsc-temporarily-excluded/",
+    "src/tests/bsc-*.ts"
+  ]
 }

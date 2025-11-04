@@ -270,6 +270,71 @@ export class OpenAPIGenerator {
       { method: 'GET', path: '/api/v1/limit-orders/orderbook/{tokenIn}/{tokenOut}', config: { auth: true }, schema: { params: { tokenIn: 'string', tokenOut: 'string' } } }
     );
 
+    // BSC (Binance Smart Chain) routes
+    routes.push(
+      // BSC Health Check
+      { method: 'GET', path: '/api/v1/bsc/health', config: { auth: false }, schema: {} },
+
+      // BSC Token routes (15 endpoints)
+      { method: 'GET', path: '/api/v1/bsc/tokens', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', search: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/tokens/verify', config: { auth: true }, schema: { body: { address: 'string', name: 'string', symbol: 'string', decimals: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/price', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/balance', config: { auth: true }, schema: { params: { address: 'string' }, query: { walletAddress: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/popular', config: { auth: true }, schema: { query: { limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/trending', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/new', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
+      { method: 'POST', path: '/api/v1/bsc/tokens/search', config: { auth: true }, schema: { body: { query: 'string', filters: 'object' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/holders', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/analytics', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/tokens/track', config: { auth: true }, schema: { body: { addresses: 'array' } } },
+      { method: 'DELETE', path: '/api/v1/bsc/tokens/{address}/track', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/tokens/tracked', config: { auth: true }, schema: { query: { page: 'number', limit: 'number' } } },
+
+      // BSC Trading routes (11 endpoints)
+      { method: 'POST', path: '/api/v1/bsc/trading/quote', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/trading/swap', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string', minimumOutput: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/trading/routes', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', maxHops: 'number' } } },
+      { method: 'POST', path: '/api/v1/bsc/trading/gas-estimate', config: { auth: true }, schema: { body: { transactionType: 'string', params: 'object' } } },
+      { method: 'GET', path: '/api/v1/bsc/trading/pairs', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/trading/pairs/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/trading/history', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
+      { method: 'POST', path: '/api/v1/bsc/trading/approve', config: { auth: true }, schema: { body: { token: 'string', spender: 'string', amount: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/trading/allowance', config: { auth: true }, schema: { query: { token: 'string', owner: 'string', spender: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/trading/impact', config: { auth: true }, schema: { query: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/trading/batch', config: { auth: true }, schema: { body: { transactions: 'array' } } },
+
+      // BSC Liquidity routes (15 endpoints)
+      { method: 'GET', path: '/api/v1/bsc/liquidity/pools', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/liquidity/pools', config: { auth: true }, schema: { body: { token0: 'string', token1: 'string', fee: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/liquidity/pools/{address}/add', config: { auth: true }, schema: { body: { amount0: 'string', amount1: 'string', slippageTolerance: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/liquidity/pools/{address}/remove', config: { auth: true }, schema: { body: { lpTokenAmount: 'string', slippageTolerance: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/positions', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/positions/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/apr', config: { auth: true }, schema: { query: { poolAddress: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/impermanent-loss', config: { auth: true }, schema: { query: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/liquidity/estimate/add', config: { auth: true }, schema: { body: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/liquidity/estimate/remove', config: { auth: true }, schema: { body: { poolAddress: 'string', lpTokenAmount: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/fees', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/volume', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/top-pools', config: { auth: true }, schema: { query: { sortBy: 'string', limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/chart', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+
+      // BSC Portfolio routes (10 endpoints)
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/assets', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/value', config: { auth: true }, schema: { params: { address: 'string' }, query: { currency: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/performance', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/allocation', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/pnl', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/portfolio/compare', config: { auth: true }, schema: { body: { addresses: 'array', period: 'string' } } },
+      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/recommendations', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/api/v1/bsc/portfolio/export', config: { auth: true }, schema: { body: { address: 'string', format: 'string', period: 'string' } } }
+    );
+
     // Health check
     routes.push(
       { method: 'GET', path: '/', config: { auth: false }, schema: {} }
@@ -325,7 +390,8 @@ export class OpenAPIGenerator {
       'liquidity': 'Liquidity',
       'yield': 'Yield Farming',
       'governance': 'Governance',
-      'limit-orders': 'Limit Orders'
+      'limit-orders': 'Limit Orders',
+      'bsc': 'BSC (Binance Smart Chain)'
     };
 
     for (const segment of pathSegments) {
@@ -1283,6 +1349,162 @@ export class OpenAPIGenerator {
             type: 'string',
             format: 'date-time',
             description: 'Error timestamp'
+          }
+        }
+      },
+      // BSC-specific schemas
+      BSCToken: {
+        type: 'object',
+        required: ['address', 'symbol', 'decimals'],
+        properties: {
+          address: {
+            type: 'string',
+            pattern: '^0x[a-fA-F0-9]{40}$',
+            description: 'BSC token contract address'
+          },
+          symbol: {
+            type: 'string',
+            description: 'Token symbol'
+          },
+          name: {
+            type: 'string',
+            description: 'Token name'
+          },
+          decimals: {
+            type: 'integer',
+            description: 'Number of decimal places'
+          },
+          totalSupply: {
+            type: 'string',
+            description: 'Total token supply'
+          },
+          priceUSD: {
+            type: 'string',
+            description: 'Current price in USD'
+          },
+          marketCapUSD: {
+            type: 'string',
+            description: 'Market capitalization in USD'
+          },
+          liquidityUSD: {
+            type: 'string',
+            description: 'Total liquidity in USD'
+          },
+          volume24hUSD: {
+            type: 'string',
+            description: '24 hour trading volume in USD'
+          },
+          priceChange24h: {
+            type: 'string',
+            description: '24 hour price change percentage'
+          }
+        }
+      },
+      BSCTradingPair: {
+        type: 'object',
+        properties: {
+          address: {
+            type: 'string',
+            description: 'Pair contract address'
+          },
+          token0: { $ref: '#/components/schemas/BSCToken' },
+          token1: { $ref: '#/components/schemas/BSCToken' },
+          reserve0: {
+            type: 'string',
+            description: 'Token0 reserve amount'
+          },
+          reserve1: {
+            type: 'string',
+            description: 'Token1 reserve amount'
+          },
+          totalSupply: {
+            type: 'string',
+            description: 'LP tokens total supply'
+          },
+          apr: {
+            type: 'string',
+            description: 'Annual percentage rate'
+          },
+          volume24h: {
+            type: 'string',
+            description: '24 hour volume'
+          },
+          fees24h: {
+            type: 'string',
+            description: '24 hour fees'
+          }
+        }
+      },
+      BSCLiquidityPosition: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            description: 'Position unique identifier'
+          },
+          pool: { $ref: '#/components/schemas/BSCTradingPair' },
+          user: {
+            type: 'string',
+            description: 'User wallet address'
+          },
+          amount0: {
+            type: 'string',
+            description: 'Token0 amount in position'
+          },
+          amount1: {
+            type: 'string',
+            description: 'Token1 amount in position'
+          },
+          lpTokens: {
+            type: 'string',
+            description: 'LP token amount'
+          },
+          valueUSD: {
+            type: 'string',
+            description: 'Position value in USD'
+          },
+          impermanentLoss: {
+            type: 'string',
+            description: 'Impermanent loss percentage'
+          },
+          feesEarned: {
+            type: 'string',
+            description: 'Fees earned'
+          }
+        }
+      },
+      BSCPortfolio: {
+        type: 'object',
+        properties: {
+          address: {
+            type: 'string',
+            description: 'Portfolio wallet address'
+          },
+          totalValueUSD: {
+            type: 'string',
+            description: 'Total portfolio value in USD'
+          },
+          assets: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/BSCToken' },
+            description: 'Portfolio assets'
+          },
+          liquidityPositions: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/BSCLiquidityPosition' },
+            description: 'Liquidity positions'
+          },
+          performance24h: {
+            type: 'string',
+            description: '24 hour performance percentage'
+          },
+          performance7d: {
+            type: 'string',
+            description: '7 day performance percentage'
+          },
+          performance30d: {
+            type: 'string',
+            description: '30 day performance percentage'
           }
         }
       }

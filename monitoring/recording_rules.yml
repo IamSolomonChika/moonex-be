@@ -1,0 +1,180 @@
+# Recording Rules for BSC DEX Integration Platform
+groups:
+  - name: system_recording_rules
+    rules:
+      # CPU Usage
+      - record: instance:node_cpu_utilization:rate5m
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      # Memory Usage
+      - record: instance:node_memory_utilization:ratio
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes
+
+      # Disk Usage
+      - record: instance:node_filesystem_utilization:ratio
+        expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes
+
+      # Network Traffic
+      - record: instance:node_network_receive_bytes:rate5m
+        expr: sum by(instance) (rate(node_network_receive_bytes_total[5m]))
+
+      - record: instance:node_network_transmit_bytes:rate5m
+        expr: sum by(instance) (rate(node_network_transmit_bytes_total[5m]))
+
+  - name: application_recording_rules
+    rules:
+      # API Request Rate
+      - record: job:http_requests:rate5m
+        expr: sum by(job) (rate(http_requests_total[5m]))
+
+      # API Error Rate
+      - record: job:http_requests_error_rate:rate5m
+        expr: sum by(job) (rate(http_requests_total{status=~"5.."}[5m])) / sum by(job) (rate(http_requests_total[5m]))
+
+      # API Response Time Percentiles
+      - record: job:http_request_duration_seconds:histogram_quantile_95
+        expr: histogram_quantile(0.95, sum by(job, le) (rate(http_request_duration_seconds_bucket[5m])))
+
+      - record: job:http_request_duration_seconds:histogram_quantile_50
+        expr: histogram_quantile(0.50, sum by(job, le) (rate(http_request_duration_seconds_bucket[5m])))
+
+      # API Request Size
+      - record: job:http_request_size_bytes:histogram_quantile_95
+        expr: histogram_quantile(0.95, sum by(job, le) (rate(http_request_size_bytes_bucket[5m])))
+
+      # API Response Size
+      - record: job:http_response_size_bytes:histogram_quantile_95
+        expr: histogram_quantile(0.95, sum by(job, le) (rate(http_response_size_bytes_bucket[5m])))
+
+  - name: database_recording_rules
+    rules:
+      # Database Connections
+      - record: job:pg_stat_activity_count:current
+        expr: sum by(job) (pg_stat_activity_count)
+
+      # Database Transaction Rate
+      - record: job:pg_stat_database_xact_commit:rate5m
+        expr: sum by(job) (rate(pg_stat_database_xact_commit_total[5m]))
+
+      - record: job:pg_stat_database_xact_rollback:rate5m
+        expr: sum by(job) (rate(pg_stat_database_xact_rollback_total[5m]))
+
+      # Database Size
+      - record: job:pg_database_size_bytes:current
+        expr: sum by(job) (pg_database_size_bytes)
+
+      # Database Locks
+      - record: job:pg_locks_count:current
+        expr: sum by(job) (pg_locks_count)
+
+  - name: redis_recording_rules
+    rules:
+      # Redis Memory Usage
+      - record: job:redis_memory_used_bytes:current
+        expr: sum by(job) (redis_memory_used_bytes)
+
+      # Redis Connected Clients
+      - record: job:redis_connected_clients:current
+        expr: sum by(job) (redis_connected_clients)
+
+      # Redis Operations Rate
+      - record: job:redis_commands_processed_total:rate5m
+        expr: sum by(job) (rate(redis_commands_processed_total[5m]))
+
+      # Redis Hit Rate
+      - record: job:redis_keyspace_hits_total:rate5m
+        expr: sum by(job) (rate(redis_keyspace_hits_total[5m]))
+
+      - record: job:redis_keyspace_misses_total:rate5m
+        expr: sum by(job) (rate(redis_keyspace_misses_total[5m]))
+
+  - name: blockchain_recording_rules
+    rules:
+      # BSC Block Time
+      - record: bsc:block_time:seconds
+        expr: bsc_latest_block_timestamp - bsc_previous_block_timestamp
+
+      # BSC Gas Price Average
+      - record: bsc:gas_price:average5m
+        expr: avg_over_time(bsc_gas_price[5m])
+
+      # BSC Transaction Rate
+      - record: bsc:transactions:rate5m
+        expr: rate(bsc_transactions_total[5m])
+
+      # BSC Pending Transactions
+      - record: bsc:pending_transactions:current
+        expr: bsc_pending_tx_pool_size
+
+      # Trading Volume
+      - record: trading:volume_usd:rate1h
+        expr: sum(rate(trading_volume_usd_total[1h]))
+
+      - record: trading:volume_usd:rate24h
+        expr: sum(rate(trading_volume_usd_total[24h]))
+
+      # Trading Success Rate
+      - record: trading:success_rate:percentage5m
+        expr: (sum(rate(trading_success_total[5m])) / sum(rate(trading_attempts_total[5m]))) * 100
+
+      # Liquidity Metrics
+      - record: liquidity:total_value_locked_usd:current
+        expr: sum(liquidity_pool_value_locked_usd)
+
+      - record: liquidity:apr_percentage:current
+        expr: avg(liquidity_pool_apr_percentage)
+
+  - name: business_recording_rules
+    rules:
+      # Active Users
+      - record: users:active:rate1h
+        expr: sum(rate(user_sessions_active_total[1h]))
+
+      - record: users:active:rate24h
+        expr: sum(rate(user_sessions_active_total[24h]))
+
+      # New Users
+      - record: users:new:rate1h
+        expr: sum(rate(user_registrations_total[1h]))
+
+      - record: users:new:rate24h
+        expr: sum(rate(user_registrations_total[24h]))
+
+      # API Usage by Tier
+      - record: api:usage_by_tier:rate5m
+        expr: sum by(api_tier) (rate(api_requests_total[5m]))
+
+      # Revenue Metrics
+      - record: revenue:fees_collected_usd:rate1h
+        expr: sum(rate(trading_fees_collected_usd_total[1h]))
+
+      - record: revenue:fees_collected_usd:rate24h
+        expr: sum(rate(trading_fees_collected_usd_total[24h]))
+
+      # MEV Protection Metrics
+      - record: mev:protection_success_rate:percentage5m
+        expr: (sum(rate(mev_protection_success_total[5m])) / sum(rate(mev_protection_attempts_total[5m]))) * 100
+
+      - record: mev:value_saved_usd:rate1h
+        expr: sum(rate(mev_value_saved_usd_total[1h]))
+
+  - name: performance_recording_rules
+    rules:
+      # Container Resource Usage
+      - record: container:cpu_usage:percentage5m
+        expr: sum by(container_name) (rate(container_cpu_usage_seconds_total[5m])) * 100
+
+      - record: container:memory_usage:percentage5m
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+
+      # Application Error Budget
+      - record: sli:error_budget:remaining:percentage
+        expr: (1 - (sum(rate(http_requests_total{status=~"5.."}[30d])) / sum(rate(http_requests_total[30d])))) * 100
+
+      # Application Uptime
+      - record: sli:uptime:percentage30d
+        expr: (sum(rate(http_requests_total{status!~"5.."}[30d])) / sum(rate(http_requests_total[30d]))) * 100
+
+      # Response Time SLO
+      - record: slo:response_time_p95:percentage
+        expr: (sum(rate(http_request_duration_seconds_bucket{le="1.0"}[5m])) / sum(rate(http_request_duration_seconds_count[5m]))) * 100

@@ -1,0 +1,112 @@
+# Prometheus Configuration for BSC DEX Integration Platform
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'bsc-dex-prod'
+    replica: 'prometheus-1'
+
+# Rule files
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # API Service Metrics
+  - job_name: 'api-service'
+    static_configs:
+      - targets: ['api:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Background Worker Metrics
+  - job_name: 'worker-service'
+    static_configs:
+      - targets: ['worker:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # PostgreSQL Metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis Metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Nginx Metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 30s
+
+  # Node Exporter (System Metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # BSC Node Metrics (if available)
+  - job_name: 'bsc-node'
+    static_configs:
+      - targets: ['bsc-exporter:9101']
+    scrape_interval: 30s
+    scrape_timeout: 15s
+
+  # PancakeSwap API Metrics
+  - job_name: 'pancakeswap-api'
+    static_configs:
+      - targets: ['pancakeswap-exporter:9102']
+    scrape_interval: 60s
+    scrape_timeout: 15s
+
+  # External API Health Checks
+  - job_name: 'external-apis'
+    static_configs:
+      - targets: ['blackbox-exporter:9115']
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://api.bsc-dex.com/health
+        - https://bsc-dataseed1.binance.org/
+        - https://api.pancakeswap.info/api/v2/tokens
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Docker Container Metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['docker-exporter:9323']
+    scrape_interval: 30s
+
+# Remote write configuration (optional)
+# remote_write:
+#   - url: "https://your-remote-storage/api/v1/write"
+#     basic_auth:
+#       username: your-username
+#       password: your-password

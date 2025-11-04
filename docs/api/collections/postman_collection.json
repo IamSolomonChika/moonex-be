@@ -1,0 +1,612 @@
+{
+  "info": {
+    "name": "BSC DEX Integration API",
+    "description": "Comprehensive BSC DEX integration platform with PancakeSwap support, token trading, liquidity management, yield farming, and portfolio analytics",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "bsc-dex-collection"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.bsc-dex.com/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "BSC services health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "health"
+              ]
+            },
+            "description": "Check the health status of all BSC-related services"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tokens",
+      "item": [
+        {
+          "name": "List BSC tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/tokens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "tokens"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search tokens by name, symbol, or address",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filter tokens by category",
+                  "disabled": true
+                },
+                {
+                  "key": "riskLevel",
+                  "value": "",
+                  "description": "Filter tokens by risk level",
+                  "disabled": true
+                },
+                {
+                  "key": "minLiquidityUSD",
+                  "value": "",
+                  "description": "Minimum liquidity in USD",
+                  "disabled": true
+                },
+                {
+                  "key": "minVolume24h",
+                  "value": "",
+                  "description": "Minimum 24h volume in USD",
+                  "disabled": true
+                },
+                {
+                  "key": "verified",
+                  "value": "",
+                  "description": "Filter by verification status",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "",
+                  "description": "Sort order",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of items to return",
+                  "disabled": true
+                },
+                {
+                  "key": "offset",
+                  "value": "",
+                  "description": "Number of items to skip",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieve a comprehensive list of BSC tokens with filtering and sorting capabilities"
+          }
+        },
+        {
+          "name": "Get BSC token details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/tokens/{address}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "tokens",
+                "{address}"
+              ],
+              "variable": [
+                {
+                  "key": "address",
+                  "value": "",
+                  "description": "Token contract address"
+                }
+              ]
+            },
+            "description": "Retrieve detailed information about a specific BSC token"
+          }
+        },
+        {
+          "name": "Search BSC tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/tokens/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "tokens",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Search query",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of results to return",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search for tokens by name, symbol, or partial address"
+          }
+        },
+        {
+          "name": "Verify BSC token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/tokens/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "tokens",
+                "verify"
+              ]
+            },
+            "description": "Submit a token contract for security verification and analysis",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trading",
+      "item": [
+        {
+          "name": "Get swap quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/trading/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "trading",
+                "quote"
+              ]
+            },
+            "description": "Get a detailed quote for token swap including optimal routing, gas estimation, and price impact analysis",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Execute token swap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/trading/swap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "trading",
+                "swap"
+              ]
+            },
+            "description": "Execute a token swap using the provided quote with MEV protection and gas optimization",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Find optimal trading routes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/trading/routes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "trading",
+                "routes"
+              ]
+            },
+            "description": "Find optimal trading routes between tokens with detailed path analysis",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Liquidity",
+      "item": [
+        {
+          "name": "List liquidity pools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/liquidity/pools",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "liquidity",
+                "pools"
+              ],
+              "query": [
+                {
+                  "key": "token0",
+                  "value": "",
+                  "description": "Filter by first token address",
+                  "disabled": true
+                },
+                {
+                  "key": "token1",
+                  "value": "",
+                  "description": "Filter by second token address",
+                  "disabled": true
+                },
+                {
+                  "key": "protocol",
+                  "value": "",
+                  "description": "Filter by protocol",
+                  "disabled": true
+                },
+                {
+                  "key": "feeTier",
+                  "value": "",
+                  "description": "Filter by fee tier (V3 only)",
+                  "disabled": true
+                },
+                {
+                  "key": "minTVL",
+                  "value": "",
+                  "description": "Minimum TVL in USD",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "",
+                  "description": "Sort order",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of pools to return",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List available liquidity pools with filtering and sorting options"
+          }
+        },
+        {
+          "name": "Get add liquidity quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/liquidity/quote/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "liquidity",
+                "quote",
+                "add"
+              ]
+            },
+            "description": "Get a quote for adding liquidity to a pool",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Yield",
+      "item": [
+        {
+          "name": "List yield farms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/yield/farms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "yield",
+                "farms"
+              ],
+              "query": [
+                {
+                  "key": "protocol",
+                  "value": "",
+                  "description": "Filter by protocol",
+                  "disabled": true
+                },
+                {
+                  "key": "asset",
+                  "value": "",
+                  "description": "Filter by asset token address",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by farm type",
+                  "disabled": true
+                },
+                {
+                  "key": "minAPR",
+                  "value": "",
+                  "description": "Minimum APR percentage",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "",
+                  "description": "Sort order",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "Number of farms to return",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List available yield farming opportunities with detailed metrics"
+          }
+        },
+        {
+          "name": "Stake in yield farm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/yield/farms/{farmId}/stake",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "yield",
+                "farms",
+                "{farmId}",
+                "stake"
+              ],
+              "variable": [
+                {
+                  "key": "farmId",
+                  "value": "",
+                  "description": "Farm ID"
+                }
+              ]
+            },
+            "description": "Stake tokens in a yield farm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "item": [
+        {
+          "name": "Get portfolio overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/portfolio/overview/{userAddress}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "portfolio",
+                "overview",
+                "{userAddress}"
+              ],
+              "variable": [
+                {
+                  "key": "userAddress",
+                  "value": "",
+                  "description": "User wallet address"
+                }
+              ],
+              "query": [
+                {
+                  "key": "includeHistorical",
+                  "value": "",
+                  "description": "Include historical data",
+                  "disabled": true
+                },
+                {
+                  "key": "timeframe",
+                  "value": "",
+                  "description": "Timeframe for historical data",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get comprehensive portfolio overview for a user address"
+          }
+        },
+        {
+          "name": "Get portfolio performance metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bsc/portfolio/performance/{userAddress}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bsc",
+                "portfolio",
+                "performance",
+                "{userAddress}"
+              ],
+              "variable": [
+                {
+                  "key": "userAddress",
+                  "value": "",
+                  "description": "User wallet address"
+                }
+              ],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "",
+                  "description": "Analysis timeframe",
+                  "disabled": true
+                },
+                {
+                  "key": "benchmarks",
+                  "value": "",
+                  "description": "Benchmark tokens to compare against",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get detailed performance metrics and analytics for a portfolio"
+          }
+        }
+      ]
+    }
+  ]
+}

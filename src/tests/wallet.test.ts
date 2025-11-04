@@ -12,6 +12,43 @@ import {
   GasEstimate
 } from '../services/wallet';
 import { User } from '../services/auth';
+import { initializeDatabase, disconnectDatabase } from '../config/database';
+
+// Initialize database for tests
+let database: any;
+
+beforeAll(async () => {
+  console.log('Initializing test database for wallet tests...');
+  database = initializeDatabase();
+
+  // Wait for database to be ready
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Create test user in database
+  try {
+    await database.user.create({
+      data: {
+        id: mockUser.id,
+        privyUserId: mockUser.privyUserId,
+        email: mockUser.email,
+        walletAddress: mockUser.walletAddress,
+        isActive: true
+      }
+    });
+    console.log('Test user created in database');
+  } catch (error) {
+    console.log('Test user might already exist:', error.message);
+  }
+
+  console.log('Test database initialized for wallet tests');
+});
+
+afterAll(async () => {
+  if (database) {
+    await disconnectDatabase();
+    console.log('Test database disconnected for wallet tests');
+  }
+});
 
 // Mock user for testing
 const mockUser: User = {

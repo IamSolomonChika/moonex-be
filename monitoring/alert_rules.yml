@@ -1,0 +1,288 @@
+# Alert Rules for BSC DEX Integration Platform
+groups:
+  - name: system_alerts
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }} for more than 5 minutes."
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 15
+        for: 10m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk space low on {{ $labels.instance }}"
+          description: "Disk space is {{ $value }}% full on {{ $labels.instance }}."
+
+      # Server Down
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "{{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute."
+
+  - name: application_alerts
+    rules:
+      # API Service Down
+      - alert: APIServiceDown
+        expr: up{job="api-service"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API service is down"
+          description: "API service has been down for more than 2 minutes."
+
+      # High API Response Time
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }} seconds."
+
+      # High API Error Rate
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 3m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value }}% for the last 5 minutes."
+
+      # Database Connection Issues
+      - alert: DatabaseConnectionFailure
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection failure"
+          description: "Cannot connect to PostgreSQL database."
+
+      # High Database Connections
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High database connections"
+          description: "Database has {{ $value }} active connections."
+
+      # Redis Connection Issues
+      - alert: RedisConnectionFailure
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis connection failure"
+          description: "Cannot connect to Redis cache."
+
+      # Worker Queue Backlog
+      - alert: WorkerQueueBacklog
+        expr: worker_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: worker
+        annotations:
+          summary: "Worker queue backlog"
+          description: "Worker queue has {{ $value }} pending jobs."
+
+  - name: blockchain_alerts
+    rules:
+      # BSC Node Sync Issues
+      - alert: BSCNodeSyncIssue
+        expr: bsc_syncing == 1
+        for: 10m
+        labels:
+          severity: critical
+          service: blockchain
+        annotations:
+          summary: "BSC node sync issue"
+          description: "BSC node is still syncing for more than 10 minutes."
+
+      # BSC Node Down
+      - alert: BSCNodeDown
+        expr: up{job="bsc-node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: blockchain
+        annotations:
+          summary: "BSC node is down"
+          description: "Cannot connect to BSC node."
+
+      # Low BSC Node Peer Count
+      - alert: LowBSCNodePeerCount
+        expr: bsc_peer_count < 3
+        for: 5m
+        labels:
+          severity: warning
+          service: blockchain
+        annotations:
+          summary: "Low BSC node peer count"
+          description: "BSC node has only {{ $value }} peers."
+
+      # High Gas Price Alert
+      - alert: HighGasPrice
+        expr: bsc_gas_price > 20000000000  # 20 Gwei
+        for: 15m
+        labels:
+          severity: warning
+          service: blockchain
+        annotations:
+          summary: "High BSC gas price"
+          description: "BSC gas price is {{ $value }} wei ({{ $value | humanizeGwei }} Gwei)."
+
+  - name: business_alerts
+    rules:
+      # Low Trading Volume
+      - alert: LowTradingVolume
+        expr: rate(trading_volume_total[1h]) < 1000
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low trading volume"
+          description: "Trading volume is {{ $value }} USD in the last hour."
+
+      # Failed Transactions Spike
+      - alert: FailedTransactionsSpike
+        expr: rate(blockchain_transactions_failed_total[5m]) / rate(blockchain_transactions_total[5m]) * 100 > 10
+        for: 5m
+        labels:
+          severity: critical
+          service: business
+        annotations:
+          summary: "High failed transaction rate"
+          description: "Failed transaction rate is {{ $value }}% in the last 5 minutes."
+
+      # Liquidity Provider Issues
+      - alert: LiquidityProviderIssue
+        expr: liquidity_provider_status == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: business
+        annotations:
+          summary: "Liquidity provider issue"
+          description: "Liquidity provider is experiencing issues."
+
+      # MEV Protection Failure
+      - alert: MEVProtectionFailure
+        expr: mev_protection_success_rate < 95
+        for: 10m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "MEV protection failure"
+          description: "MEV protection success rate is {{ $value }}%."
+
+  - name: security_alerts
+    rules:
+      # High Rate of Failed Authentications
+      - alert: HighFailedAuthRate
+        expr: rate(authentication_failures_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High failed authentication rate"
+          description: "{{ $value }} failed authentication attempts per second."
+
+      # Suspicious API Usage
+      - alert: SuspiciousAPIUsage
+        expr: rate(http_requests_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Suspicious API usage"
+          description: "{{ $value }} requests per second from {{ $labels.client_ip }}."
+
+      # SSL Certificate Expiring Soon
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."
+
+  - name: infrastructure_alerts
+    rules:
+      # Docker Container Down
+      - alert: DockerContainerDown
+        expr: container_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Docker container down"
+          description: "Container {{ $labels.name }} is down."
+
+      # High Container Memory Usage
+      - alert: HighContainerMemoryUsage
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High container memory usage"
+          description: "Container {{ $labels.name }} is using {{ $value }}% of its memory limit."
+
+      # Nginx High Error Rate
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) * 100 > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Nginx high error rate"
+          description: "Nginx error rate is {{ $value }}%."

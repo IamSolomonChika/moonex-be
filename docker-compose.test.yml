@@ -1,0 +1,54 @@
+# BSC DEX Integration Platform - Test Environment
+version: '3.8'
+
+services:
+  # PostgreSQL Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: bsc-dex-postgres-test
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=bsc_dex_test
+      - POSTGRES_USER=bsc_dex_user
+      - POSTGRES_PASSWORD=test_password_123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    networks:
+      - bsc-dex-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bsc_dex_user -d bsc_dex_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Redis Test Cache
+  redis-test:
+    image: redis:7-alpine
+    container_name: bsc-dex-redis-test
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass test_redis_password
+    volumes:
+      - redis_test_data:/data
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    networks:
+      - bsc-dex-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+
+networks:
+  bsc-dex-test-network:
+    driver: bridge

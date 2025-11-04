@@ -1,0 +1,162 @@
+// Test Prisma schema for PostgreSQL testing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for storing user information
+model User {
+  id                String   @id @default(cuid())
+  privyUserId      String   @unique // Privy user ID
+  email            String   @unique
+  walletAddress    String?  @unique // Primary wallet address
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  wallets          Wallet[]
+  sessions         Session[]
+  transactions     Transaction[]
+  liquidityPositions LiquidityPosition[]
+  governanceProposals GovernanceProposal[]
+  governanceVotes   GovernanceVote[]
+
+  @@map("users")
+}
+
+// Session model for authentication
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  refreshToken String?  @unique
+  expiresAt    DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// Wallet model for storing user wallets
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String
+  address     String   @unique
+  type        String   // 'embedded', 'external'
+  chainId     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+// Transaction model for storing transaction history
+model Transaction {
+  id              String    @id @default(cuid())
+  userId          String?
+  walletId        String?
+  hash            String    @unique
+  from            String
+  to              String
+  value           String
+  gasUsed         String?
+  gasPrice        String?
+  status          String    // 'pending', 'confirmed', 'failed'
+  blockNumber     Int?
+  timestamp       DateTime
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
+
+// Liquidity Position model for DeFi liquidity positions
+model LiquidityPosition {
+  id           String   @id @default(cuid())
+  userId       String
+  protocol     String   // 'uniswap', 'pancakeswap', etc.
+  poolAddress  String
+  token0Symbol String
+  token1Symbol String
+  token0Amount String
+  token1Amount String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("liquidity_positions")
+}
+
+// Governance Proposal model
+model GovernanceProposal {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  type        String   // 'parameter_change', 'fund_allocation', 'protocol_upgrade'
+  status      String   // 'draft', 'active', 'executed', 'failed'
+  startBlock  Int
+  endBlock    Int
+  votesFor    Int      @default(0)
+  votesAgainst Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes   GovernanceVote[]
+
+  @@map("governance_proposals")
+}
+
+// Governance Vote model
+model GovernanceVote {
+  id         String   @id @default(cuid())
+  userId     String
+  proposalId String
+  support    Boolean  // true for for, false for against
+  votingPower String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposal GovernanceProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, proposalId])
+  @@map("governance_votes")
+}
+
+// Audit Log model for tracking system events
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}

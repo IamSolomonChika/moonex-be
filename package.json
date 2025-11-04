@@ -5,14 +5,15 @@
   "main": "build/index.js",
   "scripts": {
     "build": "prisma generate && tsc",
-    "start": "pnpm run build && node build/index.js",
+    "start": "node build/index.js",
     "dev": "pnpm build && pnpm start",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "generate-docs": "pnpm build && node ./build/scripts/generate-docs.js",
-    "docs:dev": "pnpm generate-docs && npx serve ./api-docs",
-    "docs:build": "pnpm generate-docs"
+    "docs:dev": "pnpm generate-docs && npx serve ./docs/api",
+    "docs:build": "pnpm generate-docs",
+    "api-docs": "ts-node scripts/generate-api-docs.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,12 +27,13 @@
     "@types/jsonwebtoken": "^9.0.10",
     "decimal.js": "^10.6.0",
     "dotenv": "^17.2.3",
+    "viem": "2.38.5",
     "fastify": "^5.6.1",
-    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "pino": "^10.0.0",
     "pino-pretty": "^13.1.2",
-    "prisma": "^6.17.1"
+    "prisma": "^6.17.1",
+    "redis": "^5.9.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
@@ -40,8 +42,10 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.7.2",
     "jest": "^30.2.0",
+    "js-yaml": "^4.1.0",
     "serve": "^14.2.5",
     "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
 }

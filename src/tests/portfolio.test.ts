@@ -1,46 +1,45 @@
 import { PortfolioService } from '../services/portfolio';
-import { getDatabase } from '../config/database';
+import { initializeDatabase, disconnectDatabase } from '../config/database';
+import { executeTransaction } from '../config/database';
 
-// Mock the database module
-jest.mock('../config/database');
-const mockGetDatabase = getDatabase as jest.MockedFunction<typeof getDatabase>;
+// Initialize database for tests
+let database: any;
+
+beforeAll(async () => {
+  console.log('Initializing test database for portfolio tests...');
+  database = initializeDatabase();
+
+  // Wait for database to be ready
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Create test user
+  await database.user.create({
+    data: {
+      id: 'test-user-portfolio',
+      privyUserId: 'privy-test-user-portfolio',
+      email: 'portfolio-test@example.com',
+      isActive: true
+    }
+  });
+
+  console.log('Test database initialized for portfolio tests');
+});
+
+afterAll(async () => {
+  if (database) {
+    await disconnectDatabase();
+    console.log('Test database disconnected for portfolio tests');
+  }
+});
 
 describe('PortfolioService', () => {
   let portfolioService: PortfolioService;
-  let mockDb: any;
 
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
     portfolioService = new PortfolioService();
-
-    // Mock database methods
-    mockDb = {
-      liquidityPosition: {
-        findMany: jest.fn()
-      },
-      farmPosition: {
-        findMany: jest.fn()
-      },
-      tradingBot: {
-        findMany: jest.fn()
-      },
-      wallet: {
-        findMany: jest.fn()
-      },
-      trade: {
-        findMany: jest.fn()
-      },
-      stopLossTrade: {
-        findMany: jest.fn()
-      },
-      botTrade: {
-        findMany: jest.fn()
-      }
-    };
-
-    mockGetDatabase.mockReturnValue(mockDb);
   });
 
   afterEach(() => {
@@ -50,10 +49,10 @@ describe('PortfolioService', () => {
 
   describe('getPortfolioSummary', () => {
     it('should return portfolio summary with all position types', async () => {
-      const userId = 'user-1';
+      const userId = 'test-user-portfolio';
 
       // Mock liquidity positions
-      mockDb.liquidityPosition.findMany.mockResolvedValue([
+      jest.spyOn(database.liquidityPosition, 'findMany').mockResolvedValue([
         {
           id: 'lp-1',
           poolId: 'pool-1',
@@ -72,7 +71,7 @@ describe('PortfolioService', () => {
       ]);
 
       // Mock farm positions
-      mockDb.farmPosition.findMany.mockResolvedValue([
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([
         {
           id: 'farm-1',
           farmId: 'farm-1',
@@ -88,7 +87,7 @@ describe('PortfolioService', () => {
       ]);
 
       // Mock trading bots
-      mockDb.tradingBot.findMany.mockResolvedValue([
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([
         {
           id: 'bot-1',
           tokenInAddress: '0x123',
@@ -102,7 +101,7 @@ describe('PortfolioService', () => {
       ]);
 
       // Mock wallets
-      mockDb.wallet.findMany.mockResolvedValue([
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([
         {
           id: 'wallet-1',
           address: '0xabc',
@@ -127,10 +126,10 @@ describe('PortfolioService', () => {
       const userId = 'user-2';
 
       // Mock empty results
-      mockDb.liquidityPosition.findMany.mockResolvedValue([]);
-      mockDb.farmPosition.findMany.mockResolvedValue([]);
-      mockDb.tradingBot.findMany.mockResolvedValue([]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.liquidityPosition, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -142,7 +141,7 @@ describe('PortfolioService', () => {
     it('should handle database errors gracefully', async () => {
       const userId = 'user-3';
 
-      mockDb.liquidityPosition.findMany.mockRejectedValue(new Error('Database error'));
+      jest.spyOn(database.liquidityPosition, 'findMany').mockRejectedValue(new Error('Database error'));
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -308,7 +307,7 @@ describe('PortfolioService', () => {
     it('should correctly calculate asset allocation', async () => {
       const userId = 'user-1';
 
-      mockDb.liquidityPosition.findMany.mockResolvedValue([
+      database.liquidityPosition.findMany.mockResolvedValue([
         {
           id: 'lp-1',
           valueUSD: '6000',
@@ -319,7 +318,7 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.farmPosition.findMany.mockResolvedValue([
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([
         {
           id: 'farm-1',
           valueUSD: '4000',
@@ -329,8 +328,8 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.tradingBot.findMany.mockResolvedValue([]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -342,7 +341,7 @@ describe('PortfolioService', () => {
     it('should correctly calculate position type allocation', async () => {
       const userId = 'user-1';
 
-      mockDb.liquidityPosition.findMany.mockResolvedValue([
+      database.liquidityPosition.findMany.mockResolvedValue([
         {
           id: 'lp-1',
           valueUSD: '6000',
@@ -350,7 +349,7 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.farmPosition.findMany.mockResolvedValue([
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([
         {
           id: 'farm-1',
           valueUSD: '4000',
@@ -358,8 +357,8 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.tradingBot.findMany.mockResolvedValue([]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -373,10 +372,10 @@ describe('PortfolioService', () => {
     it('should handle zero total portfolio value', async () => {
       const userId = 'user-empty';
 
-      mockDb.liquidityPosition.findMany.mockResolvedValue([]);
-      mockDb.farmPosition.findMany.mockResolvedValue([]);
-      mockDb.tradingBot.findMany.mockResolvedValue([]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.liquidityPosition, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -391,7 +390,7 @@ describe('PortfolioService', () => {
       const userId = 'user-zero';
 
       // Mock position with zero value
-      mockDb.liquidityPosition.findMany.mockResolvedValue([
+      database.liquidityPosition.findMany.mockResolvedValue([
         {
           id: 'lp-1',
           valueUSD: '0',
@@ -399,9 +398,9 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.farmPosition.findMany.mockResolvedValue([]);
-      mockDb.tradingBot.findMany.mockResolvedValue([]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.farmPosition, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 
@@ -414,7 +413,7 @@ describe('PortfolioService', () => {
       const userId = 'user-malformed';
 
       // Mock malformed data
-      mockDb.liquidityPosition.findMany.mockResolvedValue([
+      database.liquidityPosition.findMany.mockResolvedValue([
         {
           id: 'lp-1',
           valueUSD: null,
@@ -422,9 +421,9 @@ describe('PortfolioService', () => {
         }
       ]);
 
-      mockDb.farmPosition.findMany.mockRejectedValue(new Error('Invalid data'));
-      mockDb.tradingBot.findMany.mockResolvedValue([{}]);
-      mockDb.wallet.findMany.mockResolvedValue([]);
+      jest.spyOn(database.farmPosition, 'findMany').mockRejectedValue(new Error('Invalid data'));
+      jest.spyOn(database.tradingBot, 'findMany').mockResolvedValue([{}]);
+      jest.spyOn(database.wallet, 'findMany').mockResolvedValue([]);
 
       const result = await portfolioService.getPortfolioSummary(userId);
 

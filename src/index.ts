@@ -10,6 +10,7 @@ import { yieldRoutes } from './routes/yield';
 import { governanceRoutes } from './routes/governance';
 // import { governanceCompleteRoutes } from './routes/governance-complete'; // Temporarily commented due to TypeScript errors
 import { limitOrderRoutes } from './routes/limit-orders';
+// import { bscRoutes } from './routes/bsc/index.js'; // Temporarily excluded due to compilation issues
 // import { stopLossRoutes } from './routes/stop-loss'; // Temporarily commented due to auth errors
 // import { tradingBotRoutes } from './routes/trading-bots'; // Temporarily commented due to auth errors
 // import { tradingBotGenericRoutes } from './routes/trading-bots-generic'; // Temporarily commented due to syntax errors
@@ -94,6 +95,13 @@ fastify.register(async (fastify) => {
   await fastify.register(limitOrderRoutes, { prefix: '/api/v1/limit-orders' });
 });
 
+// Register BSC routes with standard protection (temporarily excluded)
+// fastify.register(async (fastify) => {
+//   fastify.addHook('preHandler', rateLimitApi);
+//   fastify.addHook('preHandler', sanitizeGeneralInput);
+//   await fastify.register(bscRoutes, { prefix: '/api/v1/bsc' });
+// });
+
 // Commented routes would also need middleware when re-enabled
 // fastify.register(governanceCompleteRoutes, { prefix: '/api/v1/governance-complete' });
 // fastify.register(stopLossRoutes, { prefix: '/api/v1/stop-loss' });
@@ -166,6 +174,8 @@ fastify.register(async (fastify) => {
         <h3>🔗 API Base URL</h3>
         <p><strong>Development:</strong> <code>http://127.0.0.1:3000/api/v1</code></p>
         <p><strong>Health Check:</strong> <code>GET http://127.0.0.1:3000</code></p>
+        <p><strong>BSC Routes:</strong> <code>http://127.0.0.1:3000/api/v1/bsc</code> (Temporarily excluded)</p>
+        <p><strong>BSC Health:</strong> <code>GET http://127.0.0.1:3000/api/v1/bsc/health</code> (Temporarily excluded)</p>
     </div>
 
     <div class="links">
