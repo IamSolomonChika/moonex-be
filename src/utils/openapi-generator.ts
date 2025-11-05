@@ -82,16 +82,20 @@ export class OpenAPIGenerator {
       },
       servers: [
         {
+          url: 'https://moonex-be.onrender.com/api/v1',
+          description: 'Development server'
+        },
+        {
+          url: 'http://localhost:3000/api/v1',
+          description: 'Local server'
+        },
+        {
           url: 'https://api.moonex.io/v1',
           description: 'Production server'
         },
         {
           url: 'https://staging-api.moonex.io/v1',
           description: 'Staging server'
-        },
-        {
-          url: 'http://localhost:3000/api/v1',
-          description: 'Development server'
         },
         ...(this.config.servers || [])
       ],
