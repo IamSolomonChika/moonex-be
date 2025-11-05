@@ -1,4 +1,4 @@
-import { Address, Hash, PublicClient, WalletClient } from 'viem';
+import { Address } from 'viem';
 import { MASTERCHEF_V1_ABI } from '../abis/masterchef';
 import { getViemProvider } from '../providers/viem-provider';
 import { getContractHelpers } from '../utils/contract-helpers';
@@ -79,7 +79,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
 
         logger.info('Successfully entered staking');
       } catch (error) {
-        logger.error('Failed to enter staking: %O', error);
+        logger.error('Failed to enter staking: %O', error as Error);
         throw new Error(`Enter staking failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -98,7 +98,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
 
         logger.info('Successfully left staking');
       } catch (error) {
-        logger.error('Failed to leave staking: %O', error);
+        logger.error('Failed to leave staking: %O', error as Error);
         throw new Error(`Leave staking failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -118,7 +118,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
 
         logger.info('Successfully deposited to pool %s', pid.toString());
       } catch (error) {
-        logger.error('Failed to deposit to pool: %O', error);
+        logger.error('Failed to deposit to pool: %O', error as Error);
         throw new Error(`Deposit failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -137,7 +137,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
 
         logger.info('Successfully withdrew from pool %s', pid.toString());
       } catch (error) {
-        logger.error('Failed to withdraw from pool: %O', error);
+        logger.error('Failed to withdraw from pool: %O', error as Error);
         throw new Error(`Withdraw failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -150,7 +150,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
         logger.debug('Pending CAKE: %s', pending.toString());
         return pending;
       } catch (error) {
-        logger.error('Failed to get pending CAKE: %O', error);
+        logger.error('Failed to get pending CAKE: %O', error as Error);
         throw new Error(`Failed to get pending CAKE: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -168,7 +168,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
           rewardDebt: info.rewardDebt,
         };
       } catch (error) {
-        logger.error('Failed to get user info: %O', error);
+        logger.error('Failed to get user info: %O', error as Error);
         throw new Error(`Failed to get user info: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -190,7 +190,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
           accCakePerShare: info.accCakePerShare,
         };
       } catch (error) {
-        logger.error('Failed to get pool info: %O', error);
+        logger.error('Failed to get pool info: %O', error as Error);
         throw new Error(`Failed to get pool info: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -202,7 +202,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
         logger.debug('Total allocation point: %s', total.toString());
         return total;
       } catch (error) {
-        logger.error('Failed to get total allocation point: %O', error);
+        logger.error('Failed to get total allocation point: %O', error as Error);
         throw new Error(`Failed to get total allocation point: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -214,7 +214,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
         logger.debug('Pool length: %s', length.toString());
         return length;
       } catch (error) {
-        logger.error('Failed to get pool length: %O', error);
+        logger.error('Failed to get pool length: %O', error as Error);
         throw new Error(`Failed to get pool length: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -226,7 +226,7 @@ export function createMasterChefV1(): MasterChefV1Viem {
         logger.debug('CAKE per block: %s', cakePerBlock.toString());
         return cakePerBlock;
       } catch (error) {
-        logger.error('Failed to get CAKE per block: %O', error);
+        logger.error('Failed to get CAKE per block: %O', error as Error);
         throw new Error(`Failed to get CAKE per block: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -235,11 +235,11 @@ export function createMasterChefV1(): MasterChefV1Viem {
     getStakedBalance: async (user: Address): Promise<bigint> => {
       try {
         logger.debug('Getting staked balance for user: %s', user);
-        const userInfo = await this.userInfo(0n, user); // Pool 0 is CAKE staking
+        const userInfo = await contract.read.userInfo([0n, user]); // Pool 0 is CAKE staking
         logger.debug('Staked balance: %s', userInfo.amount.toString());
         return userInfo.amount;
       } catch (error) {
-        logger.error('Failed to get staked balance: %O', error);
+        logger.error('Failed to get staked balance: %O', error as Error);
         throw new Error(`Failed to get staked balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
@@ -247,11 +247,11 @@ export function createMasterChefV1(): MasterChefV1Viem {
     getPendingRewards: async (user: Address): Promise<bigint> => {
       try {
         logger.debug('Getting pending rewards for user: %s', user);
-        const pending = await this.pendingCake(0n, user); // Pool 0 is CAKE staking
+        const pending = await contract.read.pendingCake([0n, user]); // Pool 0 is CAKE staking
         logger.debug('Pending rewards: %s', pending.toString());
         return pending;
       } catch (error) {
-        logger.error('Failed to get pending rewards: %O', error);
+        logger.error('Failed to get pending rewards: %O', error as Error);
         throw new Error(`Failed to get pending rewards: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },

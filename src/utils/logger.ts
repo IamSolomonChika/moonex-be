@@ -11,15 +11,16 @@ const logger = pino({
       version: process.env.npm_package_version || '1.0.0',
     }),
   },
-  // Use pretty print in development
-  transport: process.env.NODE_ENV === 'development' ? {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'HH:MM:ss Z',
-      ignore: 'pid,hostname',
+  ...(process.env.NODE_ENV === 'development' && {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'HH:MM:ss Z',
+        ignore: 'pid,hostname',
+      },
     },
-  } : undefined,
+  }),
 });
 
 export default logger;

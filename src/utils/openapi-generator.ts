@@ -1,4 +1,4 @@
-import Fastify, { FastifyInstance } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import fs from 'fs/promises';
 import path from 'path';
 import yaml from 'js-yaml';
@@ -39,14 +39,12 @@ interface Config {
 }
 
 export class OpenAPIGenerator {
-  private fastify: FastifyInstance;
   private config: Config;
   private paths: any = {};
   private schemas: any = {};
   private tags: any[] = [];
 
-  constructor(fastify: FastifyInstance, config: Config = {}) {
-    this.fastify = fastify;
+  constructor(_fastify: FastifyInstance, config: Config = {}) {
     this.config = {
       outputPath: './api-docs',
       includeExamples: true,
@@ -203,136 +201,141 @@ export class OpenAPIGenerator {
     // This is a simplified version - in production you'd walk the route tree
     // For now, we'll manually define the routes based on the codebase analysis
 
-    // Auth routes
+    // Root route
     routes.push(
-      { method: 'POST', path: '/api/v1/auth/email', config: { auth: false }, schema: { body: { email: 'string' } } },
-      { method: 'POST', path: '/api/v1/auth/email/verify', config: { auth: false }, schema: { body: { email: 'string', code: 'string' } } },
-      { method: 'POST', path: '/api/v1/auth/social', config: { auth: false }, schema: { body: { provider: 'string', accessToken: 'string' } } },
-      { method: 'POST', path: '/api/v1/auth/wallet', config: { auth: false }, schema: { body: { walletAddress: 'string', signature: 'string', message: 'string' } } },
-      { method: 'POST', path: '/api/v1/auth/refresh', config: { auth: false }, schema: { body: { refreshToken: 'string' } } },
-      { method: 'POST', path: '/api/v1/auth/logout', config: { auth: true }, schema: {} },
-      { method: 'GET', path: '/api/v1/auth/me', config: { auth: true }, schema: {} }
+      { method: 'GET', path: '/', config: { auth: false }, schema: {} }
     );
 
-    // Wallet routes
+    // Auth routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/wallets', config: { auth: true }, schema: { body: {} } },
-      { method: 'GET', path: '/api/v1/wallets/{walletAddress}', config: { auth: true }, schema: { params: { walletAddress: 'string' } } },
-      { method: 'GET', path: '/api/v1/wallets/{walletAddress}/balance', config: { auth: true }, schema: { params: { walletAddress: 'string' } } },
-      { method: 'POST', path: '/api/v1/wallets/sign', config: { auth: true }, schema: { body: { walletAddress: 'string', to: 'string', value: 'string', data: 'string' } } },
-      { method: 'POST', path: '/api/v1/wallets/send', config: { auth: true }, schema: { body: { walletAddress: 'string', to: 'string', value: 'string', token: 'string', data: 'string' } } },
-      { method: 'GET', path: '/api/v1/wallets/{walletAddress}/transactions', config: { auth: true }, schema: { params: { walletAddress: 'string' }, query: { page: 'number', limit: 'number' } } },
-      { method: 'POST', path: '/api/v1/wallets/estimate-gas', config: { auth: true }, schema: { body: { to: 'string', value: 'string', data: 'string' } } }
+      { method: 'POST', path: '/auth/email', config: { auth: false }, schema: { body: { email: 'string' } } },
+      { method: 'POST', path: '/auth/email/verify', config: { auth: false }, schema: { body: { email: 'string', code: 'string' } } },
+      { method: 'POST', path: '/auth/social', config: { auth: false }, schema: { body: { provider: 'string', accessToken: 'string' } } },
+      { method: 'POST', path: '/auth/wallet', config: { auth: false }, schema: { body: { walletAddress: 'string', signature: 'string', message: 'string' } } },
+      { method: 'POST', path: '/auth/refresh', config: { auth: false }, schema: { body: { refreshToken: 'string' } } },
+      { method: 'POST', path: '/auth/logout', config: { auth: true }, schema: {} },
+      { method: 'GET', path: '/auth/me', config: { auth: true }, schema: {} }
     );
 
-    // Trading routes
+    // Wallet routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/trading/quote', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', slippageTolerance: 'string' } } },
-      { method: 'POST', path: '/api/v1/trading/swap', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', slippageTolerance: 'string', minimumOutput: 'string' } } },
-      { method: 'POST', path: '/api/v1/trading/routes', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', maxHops: 'number' } } },
-      { method: 'POST', path: '/api/v1/trading/gas-estimate', config: { auth: true }, schema: { body: { transactionType: 'string', params: 'object' } } }
+      { method: 'POST', path: '/wallets', config: { auth: true }, schema: { body: {} } },
+      { method: 'GET', path: '/wallets/{walletAddress}', config: { auth: true }, schema: { params: { walletAddress: 'string' } } },
+      { method: 'GET', path: '/wallets/{walletAddress}/balance', config: { auth: true }, schema: { params: { walletAddress: 'string' } } },
+      { method: 'POST', path: '/wallets/sign', config: { auth: true }, schema: { body: { walletAddress: 'string', to: 'string', value: 'string', data: 'string' } } },
+      { method: 'POST', path: '/wallets/send', config: { auth: true }, schema: { body: { walletAddress: 'string', to: 'string', value: 'string', token: 'string', data: 'string' } } },
+      { method: 'GET', path: '/wallets/{walletAddress}/transactions', config: { auth: true }, schema: { params: { walletAddress: 'string' }, query: { page: 'number', limit: 'number' } } },
+      { method: 'POST', path: '/wallets/estimate-gas', config: { auth: true }, schema: { body: { to: 'string', value: 'string', data: 'string' } } }
     );
 
-    // Liquidity routes
+    // Trading routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/liquidity/pools', config: { auth: true }, schema: { body: { token0: 'object', token1: 'object', fee: 'string', initialAmount0: 'string', initialAmount1: 'string' } } },
-      { method: 'GET', path: '/api/v1/liquidity/pools', config: { auth: true }, schema: { query: { page: 'number', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/liquidity/pools/{poolId}', config: { auth: true }, schema: { params: { poolId: 'string' } } },
-      { method: 'POST', path: '/api/v1/liquidity/pools/{poolId}/add', config: { auth: true }, schema: { body: { poolId: 'string', amount0: 'string', amount1: 'string', slippageTolerance: 'string', minimumLPTokens: 'string' } } },
-      { method: 'POST', path: '/api/v1/liquidity/pools/{poolId}/remove', config: { auth: true }, schema: { body: { poolId: 'string', lpTokenAmount: 'string', slippageTolerance: 'string', minimumAmount0: 'string', minimumAmount1: 'string' } } }
+      { method: 'POST', path: '/trading/quote', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', slippageTolerance: 'string' } } },
+      { method: 'POST', path: '/trading/swap', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', slippageTolerance: 'string', minimumOutput: 'string' } } },
+      { method: 'POST', path: '/trading/routes', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', maxHops: 'number' } } },
+      { method: 'POST', path: '/trading/gas-estimate', config: { auth: true }, schema: { body: { transactionType: 'string', params: 'object' } } }
     );
 
-    // Yield farming routes
+    // Liquidity routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/yield/farms', config: { auth: true }, schema: { body: { name: 'string', description: 'string', poolId: 'string', rewardToken: 'object', rewardRate: 'string', totalRewards: 'string', durationDays: 'number' } } },
-      { method: 'GET', path: '/api/v1/yield/farms', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
-      { method: 'GET', path: '/api/v1/yield/farms/{farmId}', config: { auth: true }, schema: { params: { farmId: 'string' } } },
-      { method: 'POST', path: '/api/v1/yield/farms/{farmId}/stake', config: { auth: true }, schema: { body: { farmId: 'string', amount: 'string' } } },
-      { method: 'POST', path: '/api/v1/yield/farms/{farmId}/unstake', config: { auth: true }, schema: { body: { farmId: 'string', amount: 'string' } } },
-      { method: 'POST', path: '/api/v1/yield/farms/{farmId}/claim', config: { auth: true }, schema: { body: { farmId: 'string' } } }
+      { method: 'POST', path: '/liquidity/pools', config: { auth: true }, schema: { body: { token0: 'object', token1: 'object', fee: 'string', initialAmount0: 'string', initialAmount1: 'string' } } },
+      { method: 'GET', path: '/liquidity/pools', config: { auth: true }, schema: { query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/liquidity/pools/{poolId}', config: { auth: true }, schema: { params: { poolId: 'string' } } },
+      { method: 'POST', path: '/liquidity/pools/{poolId}/add', config: { auth: true }, schema: { body: { poolId: 'string', amount0: 'string', amount1: 'string', slippageTolerance: 'string', minimumLPTokens: 'string' } } },
+      { method: 'POST', path: '/liquidity/pools/{poolId}/remove', config: { auth: true }, schema: { body: { poolId: 'string', lpTokenAmount: 'string', slippageTolerance: 'string', minimumAmount0: 'string', minimumAmount1: 'string' } } }
     );
 
-    // Governance routes
+    // Yield farming routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/governance/proposals', config: { auth: true }, schema: { body: { title: 'string', description: 'string', votingPeriod: 'number', quorum: 'string', approvalThreshold: 'string' } } },
-      { method: 'GET', path: '/api/v1/governance/proposals', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
-      { method: 'GET', path: '/api/v1/governance/proposals/{proposalId}', config: { auth: true }, schema: { params: { proposalId: 'string' } } },
-      { method: 'POST', path: '/api/v1/governance/proposals/{proposalId}/vote', config: { auth: true }, schema: { body: { proposalId: 'string', choice: 'string', reason: 'string' } } },
-      { method: 'GET', path: '/api/v1/governance/proposals/{proposalId}/votes', config: { auth: true }, schema: { params: { proposalId: 'string' }, query: { page: 'number', limit: 'number' } } }
+      { method: 'POST', path: '/yield/farms', config: { auth: true }, schema: { body: { name: 'string', description: 'string', poolId: 'string', rewardToken: 'object', rewardRate: 'string', totalRewards: 'string', durationDays: 'number' } } },
+      { method: 'GET', path: '/yield/farms', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
+      { method: 'GET', path: '/yield/farms/{farmId}', config: { auth: true }, schema: { params: { farmId: 'string' } } },
+      { method: 'POST', path: '/yield/farms/{farmId}/stake', config: { auth: true }, schema: { body: { farmId: 'string', amount: 'string' } } },
+      { method: 'POST', path: '/yield/farms/{farmId}/unstake', config: { auth: true }, schema: { body: { farmId: 'string', amount: 'string' } } },
+      { method: 'POST', path: '/yield/farms/{farmId}/claim', config: { auth: true }, schema: { body: { farmId: 'string' } } }
     );
 
-    // Limit order routes
+    // Governance routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
     routes.push(
-      { method: 'POST', path: '/api/v1/limit-orders/orders', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', amountOutMin: 'string', price: 'string', type: 'string', gasPrice: 'string', gasLimit: 'string', slippageTolerance: 'string', expiresAt: 'string' } } },
-      { method: 'GET', path: '/api/v1/limit-orders/orders', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
-      { method: 'GET', path: '/api/v1/limit-orders/orders/{orderId}', config: { auth: true }, schema: { params: { orderId: 'string' } } },
-      { method: 'DELETE', path: '/api/v1/limit-orders/orders/{orderId}', config: { auth: true }, schema: { params: { orderId: 'string' } } },
-      { method: 'GET', path: '/api/v1/limit-orders/orderbook/{tokenIn}/{tokenOut}', config: { auth: true }, schema: { params: { tokenIn: 'string', tokenOut: 'string' } } }
+      { method: 'POST', path: '/governance/proposals', config: { auth: true }, schema: { body: { title: 'string', description: 'string', votingPeriod: 'number', quorum: 'string', approvalThreshold: 'string' } } },
+      { method: 'GET', path: '/governance/proposals', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
+      { method: 'GET', path: '/governance/proposals/{proposalId}', config: { auth: true }, schema: { params: { proposalId: 'string' } } },
+      { method: 'POST', path: '/governance/proposals/{proposalId}/vote', config: { auth: true }, schema: { body: { proposalId: 'string', choice: 'string', reason: 'string' } } },
+      { method: 'GET', path: '/governance/proposals/{proposalId}/votes', config: { auth: true }, schema: { params: { proposalId: 'string' }, query: { page: 'number', limit: 'number' } } }
+    );
+
+    // Limit order routes - Use relative paths (without /api/v1 prefix) since server URLs already include it
+    routes.push(
+      { method: 'POST', path: '/limit-orders/orders', config: { auth: true }, schema: { body: { tokenIn: 'object', tokenOut: 'object', amountIn: 'string', amountOutMin: 'string', price: 'string', type: 'string', gasPrice: 'string', gasLimit: 'string', slippageTolerance: 'string', expiresAt: 'string' } } },
+      { method: 'GET', path: '/limit-orders/orders', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', status: 'string' } } },
+      { method: 'GET', path: '/limit-orders/orders/{orderId}', config: { auth: true }, schema: { params: { orderId: 'string' } } },
+      { method: 'DELETE', path: '/limit-orders/orders/{orderId}', config: { auth: true }, schema: { params: { orderId: 'string' } } },
+      { method: 'GET', path: '/limit-orders/orderbook/{tokenIn}/{tokenOut}', config: { auth: true }, schema: { params: { tokenIn: 'string', tokenOut: 'string' } } }
     );
 
     // BSC (Binance Smart Chain) routes
     routes.push(
       // BSC Health Check
-      { method: 'GET', path: '/api/v1/bsc/health', config: { auth: false }, schema: {} },
+      { method: 'GET', path: '/bsc/health', config: { auth: false }, schema: {} },
 
       // BSC Token routes (15 endpoints)
-      { method: 'GET', path: '/api/v1/bsc/tokens', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', search: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/tokens/verify', config: { auth: true }, schema: { body: { address: 'string', name: 'string', symbol: 'string', decimals: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/price', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/balance', config: { auth: true }, schema: { params: { address: 'string' }, query: { walletAddress: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/popular', config: { auth: true }, schema: { query: { limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/trending', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/new', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
-      { method: 'POST', path: '/api/v1/bsc/tokens/search', config: { auth: true }, schema: { body: { query: 'string', filters: 'object' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/holders', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/{address}/analytics', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/tokens/track', config: { auth: true }, schema: { body: { addresses: 'array' } } },
-      { method: 'DELETE', path: '/api/v1/bsc/tokens/{address}/track', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/tokens/tracked', config: { auth: true }, schema: { query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/tokens', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', search: 'string' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/bsc/tokens/verify', config: { auth: true }, schema: { body: { address: 'string', name: 'string', symbol: 'string', decimals: 'number' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}/price', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}/balance', config: { auth: true }, schema: { params: { address: 'string' }, query: { walletAddress: 'string' } } },
+      { method: 'GET', path: '/bsc/tokens/popular', config: { auth: true }, schema: { query: { limit: 'number' } } },
+      { method: 'GET', path: '/bsc/tokens/trending', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/tokens/new', config: { auth: true }, schema: { query: { timeFrame: 'string', limit: 'number' } } },
+      { method: 'POST', path: '/bsc/tokens/search', config: { auth: true }, schema: { body: { query: 'string', filters: 'object' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}/holders', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/tokens/{address}/analytics', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/bsc/tokens/track', config: { auth: true }, schema: { body: { addresses: 'array' } } },
+      { method: 'DELETE', path: '/bsc/tokens/{address}/track', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/tokens/tracked', config: { auth: true }, schema: { query: { page: 'number', limit: 'number' } } },
 
       // BSC Trading routes (11 endpoints)
-      { method: 'POST', path: '/api/v1/bsc/trading/quote', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/trading/swap', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string', minimumOutput: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/trading/routes', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', maxHops: 'number' } } },
-      { method: 'POST', path: '/api/v1/bsc/trading/gas-estimate', config: { auth: true }, schema: { body: { transactionType: 'string', params: 'object' } } },
-      { method: 'GET', path: '/api/v1/bsc/trading/pairs', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/trading/pairs/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/trading/history', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
-      { method: 'POST', path: '/api/v1/bsc/trading/approve', config: { auth: true }, schema: { body: { token: 'string', spender: 'string', amount: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/trading/allowance', config: { auth: true }, schema: { query: { token: 'string', owner: 'string', spender: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/trading/impact', config: { auth: true }, schema: { query: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/trading/batch', config: { auth: true }, schema: { body: { transactions: 'array' } } },
+      { method: 'POST', path: '/bsc/trading/quote', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string' } } },
+      { method: 'POST', path: '/bsc/trading/swap', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', slippageTolerance: 'string', minimumOutput: 'string' } } },
+      { method: 'POST', path: '/bsc/trading/routes', config: { auth: true }, schema: { body: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string', maxHops: 'number' } } },
+      { method: 'POST', path: '/bsc/trading/gas-estimate', config: { auth: true }, schema: { body: { transactionType: 'string', params: 'object' } } },
+      { method: 'GET', path: '/bsc/trading/pairs', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
+      { method: 'GET', path: '/bsc/trading/pairs/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/trading/history', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
+      { method: 'POST', path: '/bsc/trading/approve', config: { auth: true }, schema: { body: { token: 'string', spender: 'string', amount: 'string' } } },
+      { method: 'GET', path: '/bsc/trading/allowance', config: { auth: true }, schema: { query: { token: 'string', owner: 'string', spender: 'string' } } },
+      { method: 'GET', path: '/bsc/trading/impact', config: { auth: true }, schema: { query: { tokenIn: 'string', tokenOut: 'string', amountIn: 'string' } } },
+      { method: 'POST', path: '/bsc/trading/batch', config: { auth: true }, schema: { body: { transactions: 'array' } } },
 
       // BSC Liquidity routes (15 endpoints)
-      { method: 'GET', path: '/api/v1/bsc/liquidity/pools', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/liquidity/pools', config: { auth: true }, schema: { body: { token0: 'string', token1: 'string', fee: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/liquidity/pools/{address}/add', config: { auth: true }, schema: { body: { amount0: 'string', amount1: 'string', slippageTolerance: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/liquidity/pools/{address}/remove', config: { auth: true }, schema: { body: { lpTokenAmount: 'string', slippageTolerance: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/positions', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/positions/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/apr', config: { auth: true }, schema: { query: { poolAddress: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/impermanent-loss', config: { auth: true }, schema: { query: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/liquidity/estimate/add', config: { auth: true }, schema: { body: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/liquidity/estimate/remove', config: { auth: true }, schema: { body: { poolAddress: 'string', lpTokenAmount: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/fees', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/volume', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/top-pools', config: { auth: true }, schema: { query: { sortBy: 'string', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/liquidity/pools/{address}/chart', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/pools', config: { auth: true }, schema: { query: { page: 'number', limit: 'number', token: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/pools/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/bsc/liquidity/pools', config: { auth: true }, schema: { body: { token0: 'string', token1: 'string', fee: 'string' } } },
+      { method: 'POST', path: '/bsc/liquidity/pools/{address}/add', config: { auth: true }, schema: { body: { amount0: 'string', amount1: 'string', slippageTolerance: 'string' } } },
+      { method: 'POST', path: '/bsc/liquidity/pools/{address}/remove', config: { auth: true }, schema: { body: { lpTokenAmount: 'string', slippageTolerance: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/positions', config: { auth: true }, schema: { query: { walletAddress: 'string', page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/liquidity/positions/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/apr', config: { auth: true }, schema: { query: { poolAddress: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/impermanent-loss', config: { auth: true }, schema: { query: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
+      { method: 'POST', path: '/bsc/liquidity/estimate/add', config: { auth: true }, schema: { body: { poolAddress: 'string', amount0: 'string', amount1: 'string' } } },
+      { method: 'POST', path: '/bsc/liquidity/estimate/remove', config: { auth: true }, schema: { body: { poolAddress: 'string', lpTokenAmount: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/pools/{address}/fees', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/pools/{address}/volume', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'GET', path: '/bsc/liquidity/top-pools', config: { auth: true }, schema: { query: { sortBy: 'string', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/liquidity/pools/{address}/chart', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
 
       // BSC Portfolio routes (10 endpoints)
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/assets', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/value', config: { auth: true }, schema: { params: { address: 'string' }, query: { currency: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/performance', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/allocation', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/pnl', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/portfolio/compare', config: { auth: true }, schema: { body: { addresses: 'array', period: 'string' } } },
-      { method: 'GET', path: '/api/v1/bsc/portfolio/{address}/recommendations', config: { auth: true }, schema: { params: { address: 'string' } } },
-      { method: 'POST', path: '/api/v1/bsc/portfolio/export', config: { auth: true }, schema: { body: { address: 'string', format: 'string', period: 'string' } } }
+      { method: 'GET', path: '/bsc/portfolio/{address}', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/assets', config: { auth: true }, schema: { params: { address: 'string' }, query: { page: 'number', limit: 'number' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/value', config: { auth: true }, schema: { params: { address: 'string' }, query: { currency: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/performance', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/allocation', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/history', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string', interval: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/pnl', config: { auth: true }, schema: { params: { address: 'string' }, query: { period: 'string' } } },
+      { method: 'POST', path: '/bsc/portfolio/compare', config: { auth: true }, schema: { body: { addresses: 'array', period: 'string' } } },
+      { method: 'GET', path: '/bsc/portfolio/{address}/recommendations', config: { auth: true }, schema: { params: { address: 'string' } } },
+      { method: 'POST', path: '/bsc/portfolio/export', config: { auth: true }, schema: { body: { address: 'string', format: 'string', period: 'string' } } }
     );
 
     // Health check

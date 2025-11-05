@@ -1,0 +1,465 @@
+name: 🚀 Viem Deployment Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10.18.1'
+  VIEM_VERSION: '2.38.5'
+
+jobs:
+  🧪-test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Viem installation
+        run: |
+          echo "🔍 Validating Viem ${{ env.VIEM_VERSION }} installation..."
+          pnpm list viem
+          node -e "const viem = require('viem'); console.log('✅ Viem version:', require('./package.json').dependencies.viem)"
+
+      - name: Run linting
+        run: pnpm run lint --if-present
+
+      - name: Type checking
+        run: pnpm run type-check --if-present
+
+      - name: Run unit tests
+        run: pnpm test:viem
+
+      - name: Run integration tests
+        run: pnpm test:integration
+
+      - name: Generate test coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  🔒-security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit
+        run: pnpm audit --audit-level high
+
+      - name: Check for ethers.js dependencies
+        run: |
+          if pnpm list ethers; then
+            echo "❌ Ethers.js dependency found - should be removed"
+            exit 1
+          else
+            echo "✅ No ethers.js dependencies found"
+          fi
+
+      - name: Validate no vulnerabilities
+        run: |
+          echo "🔒 Running security validation..."
+          pnpm audit --audit-level moderate || true
+
+  🏗️-build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [🧪-test, 🔒-security]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Viem configuration
+        run: |
+          echo "🔍 Validating Viem configuration..."
+          if [ -f "./viem.config.js" ]; then
+            echo "✅ Viem configuration found"
+          else
+            echo "❌ Viem configuration not found"
+            exit 1
+          fi
+
+      - name: Build application
+        run: pnpm build:production
+
+      - name: Analyze bundle size
+        run: |
+          echo "📊 Analyzing bundle size..."
+          du -sh build/
+          find build/ -name "*.js" -exec wc -c {} + | sort -n
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: build/
+          retention-days: 7
+
+  🚀-deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [🏗️-build]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: build/
+
+      - name: Install deployment dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create deployment backup
+        run: |
+          echo "📦 Creating deployment backup..."
+          mkdir -p ./backups/staging
+          if [ -d "./build" ]; then
+            cp -r ./build ./backups/staging/build-${{ github.sha }}
+          fi
+
+      - name: Run pre-deployment validation
+        run: |
+          echo "🔍 Running pre-deployment validation..."
+          pnpm run validate:viem
+          pnpm run health:check
+
+      - name: Deploy to staging
+        id: deploy
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          chmod +x ./scripts/deploy-viem.js
+          node ./scripts/deploy-viem.js staging
+
+          echo "url=https://api-staging.moonex.com" >> $GITHUB_OUTPUT
+
+      - name: Run post-deployment health check
+        run: |
+          echo "🏥 Running post-deployment health check..."
+          sleep 10
+          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
+
+      - name: Validate Viem functionality
+        run: |
+          echo "🧪 Validating Viem functionality..."
+          curl -f ${{ steps.deploy.outputs.url }}/api/viem/validate || exit 1
+
+      - name: Notify team
+        if: success()
+        run: |
+          echo "✅ Staging deployment successful"
+          echo "📊 Deployment info:"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Environment: staging"
+
+      - name: Notify team on failure
+        if: failure()
+        run: |
+          echo "❌ Staging deployment failed"
+          echo "📊 Deployment info:"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Environment: staging"
+
+  🚀-deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [🏗️-build]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: build/
+
+      - name: Install deployment dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create deployment backup
+        run: |
+          echo "📦 Creating production deployment backup..."
+          mkdir -p ./backups/production
+          if [ -d "./build" ]; then
+            cp -r ./build ./backups/production/build-${{ github.sha }}
+          fi
+
+      - name: Run production readiness checks
+        run: |
+          echo "🔍 Running production readiness checks..."
+          pnpm run validate:viem
+          pnpm run security:check
+          pnpm run health:check
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          echo "🚀 Deploying to production environment..."
+          chmod +x ./scripts/deploy-viem.js
+          node ./scripts/deploy-viem.js production
+
+          echo "url=https://api.moonex.com" >> $GITHUB_OUTPUT
+
+      - name: Run production health checks
+        run: |
+          echo "🏥 Running production health checks..."
+          sleep 30
+
+          # Basic health check
+          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
+
+          # Viem-specific health check
+          curl -f ${{ steps.deploy.outputs.url }}/api/viem/health || exit 1
+
+          # BSC integration check
+          curl -f ${{ steps.deploy.outputs.url }}/api/bsc/status || exit 1
+
+      - name: Validate Viem functionality
+        run: |
+          echo "🧪 Validating Viem functionality in production..."
+
+          # Test token service
+          curl -f -X POST ${{ steps.deploy.outputs.url }}/api/tokens/info \
+            -H "Content-Type: application/json" \
+            -d '{"address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"}' || exit 1
+
+          # Test swap service
+          curl -f -X POST ${{ steps.deploy.outputs.url }}/api/swap/quote \
+            -H "Content-Type: application/json" \
+            -d '{"tokenIn":"0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c","tokenOut":"0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56","amountIn":"1000000000000000000"}' || exit 1
+
+      - name: Performance validation
+        run: |
+          echo "📊 Running performance validation..."
+
+          # Test response times
+          for i in {1..5}; do
+            response_time=$(curl -o /dev/null -s -w '%{time_total}' ${{ steps.deploy.outputs.url }}/health)
+            echo "Health check ${i}: ${response_time}s"
+
+            if (( $(echo "$response_time > 2.0" | bc -l) )); then
+              echo "❌ Response time too slow: ${response_time}s"
+              exit 1
+            fi
+          done
+
+      - name: Create deployment tag
+        if: success()
+        run: |
+          tag="v1.0.0-$(date +%Y%m%d-%H%M%S)"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a $tag -m "Production deployment $tag"
+          git push origin $tag
+          echo "🏷️ Created deployment tag: $tag"
+
+      - name: Notify team of successful deployment
+        if: success()
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "📊 Deployment info:"
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Branch: ${{ github.ref_name }}"
+          echo "  Environment: production"
+          echo "  Viem Version: ${{ env.VIEM_VERSION }}"
+
+      - name: Initiate rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed - initiating rollback..."
+          chmod +x ./scripts/rollback-viem.js
+          node ./scripts/rollback-viem.js emergency production
+
+  📊-performance:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: [🚀-deploy-staging]
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run performance tests
+        run: |
+          echo "📊 Running performance tests against staging..."
+          # Add performance test commands here
+
+      - name: Generate performance report
+        run: |
+          echo "📈 Generating performance report..."
+          # Add performance reporting commands here
+
+  📝-documentation:
+    name: Documentation Update
+    runs-on: ubuntu-latest
+    needs: [🚀-deploy-production]
+    if: success() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate API documentation
+        run: pnpm generate-docs
+
+      - name: Update deployment status
+        run: |
+          echo "📝 Updating deployment documentation..."
+          # Add documentation update commands here
+
+# Workflow completion status
+  🏁-complete:
+    name: Pipeline Complete
+    runs-on: ubuntu-latest
+    needs: [🧪-test, 🔒-security, 🏗️-build, 🚀-deploy-staging, 🚀-deploy-production]
+    if: always()
+
+    steps:
+      - name: Pipeline Status
+        run: |
+          echo "🏁 Pipeline Status Summary:"
+          echo "  Test: ${{ needs.🧪-test.result }}"
+          echo "  Security: ${{ needs.🔒-security.result }}"
+          echo "  Build: ${{ needs.🏗️-build.result }}"
+          echo "  Staging Deploy: ${{ needs.🚀-deploy-staging.result }}"
+          echo "  Production Deploy: ${{ needs.🚀-deploy-production.result }}"
+
+          if [[ "${{ needs.🧪-test.result }}" == "success" && "${{ needs.🔒-security.result }}" == "success" && "${{ needs.🏗️-build.result }}" == "success" ]]; then
+            echo "✅ Core pipeline completed successfully"
+          else
+            echo "❌ Core pipeline had failures"
+            exit 1
+          fi

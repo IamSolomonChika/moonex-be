@@ -5,34 +5,47 @@
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
 3. [Environment Setup](#environment-setup)
-4. [BSC Network Configuration](#bsc-network-configuration)
-5. [PancakeSwap Integration](#pancakeswap-integration)
-6. [Smart Contract Interaction](#smart-contract-interaction)
-7. [Error Handling](#error-handling)
-8. [Best Practices](#best-practices)
-9. [Troubleshooting](#troubleshooting)
-10. [Advanced Topics](#advanced-topics)
+4. [Viem Migration Guide](#viem-migration-guide)
+5. [BSC Network Configuration](#bsc-network-configuration)
+6. [PancakeSwap Integration](#pancakeswap-integration)
+7. [Smart Contract Interaction](#smart-contract-interaction)
+8. [Error Handling](#error-handling)
+9. [Best Practices](#best-practices)
+10. [Troubleshooting](#troubleshooting)
+11. [Advanced Topics](#advanced-topics)
+12. [Migration from Ethers.js to Viem](#migration-from-ethersjs-to-viem)
 
 ## Overview
 
-This guide provides comprehensive instructions for integrating with the Binance Smart Chain (BSC) network and PancakeSwap DEX protocol. It covers everything from basic setup to advanced trading strategies.
+This guide provides comprehensive instructions for integrating with the Binance Smart Chain (BSC) network and PancakeSwap DEX protocol using **Viem 2.38.5**. It covers everything from basic setup to advanced trading strategies, including the migration from Ethers.js to Viem.
+
+### What's New in Viem Integration
+
+- **Type Safety**: Full TypeScript support with enhanced type safety
+- **Performance**: Optimized RPC calls and reduced bundle size
+- **Modern API**: Cleaner, more intuitive API design
+- **BSC Optimizations**: Built-in BSC-specific optimizations
+- **Enhanced Testing**: Comprehensive test coverage with Viem-based tests
 
 ## Prerequisites
 
 ### Required Dependencies
 
 ```bash
-# Install ethers.js for blockchain interactions
-npm install ethers
+# Install Viem for blockchain interactions (recommended)
+pnpm add viem@2.38.5
 
-# Install Web3.js alternative (optional)
-npm install web3
+# Install Viem chains for BSC support
+pnpm add viem/chains
 
 # For React applications
-npm install @ethersproject/providers @ethersproject/contracts
+pnpm add wagmi @wagmi/core
 
 # For Node.js backend
-npm install ethers @prisma/client dotenv
+pnpm add viem @prisma/client dotenv
+
+# Legacy Ethers.js support (if needed for migration)
+pnpm add ethers
 ```
 
 ### Environment Variables
@@ -71,12 +84,141 @@ ENCRYPTION_KEY=your_encryption_key_here
 
 ## Environment Setup
 
-### 1. Initialize BSC Provider
+### 1. Initialize BSC Viem Clients
 
+```javascript
+import { createPublicClient, createWalletClient, http, webSocket } from 'viem';
+import { bsc, bscTestnet } from 'viem/chains';
+import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
+
+// Public client for read operations (Mainnet)
+const publicClient = createPublicClient({
+  chain: bsc,
+  transport: http(process.env.BSC_RPC_URL)
+});
+
+// Public client for read operations (Testnet)
+const testnetPublicClient = createPublicClient({
+  chain: bscTestnet,
+  transport: http(process.env.BSC_RPC_URL_TESTNET)
+});
+
+// WebSocket Client for real-time updates
+const webSocketClient = createPublicClient({
+  chain: bsc,
+  transport: webSocket('wss://bsc-ws-node.nariox.org:443')
+});
+```
+
+### 2. Setup Wallet with Viem
+
+```javascript
+import { createWalletClient, http } from 'viem';
+import { bsc } from 'viem/chains';
+import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
+
+// From private key
+const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY);
+const walletClient = createWalletClient({
+  account,
+  chain: bsc,
+  transport: http(process.env.BSC_RPC_URL)
+});
+
+// From mnemonic
+const mnemonicAccount = mnemonicToAccount(process.env.MNEMONIC);
+const mnemonicWalletClient = createWalletClient({
+  account: mnemonicAccount,
+  chain: bsc,
+  transport: http(process.env.BSC_RPC_URL)
+});
+
+// Get wallet information
+console.log('Wallet Address:', walletClient.account.address);
+const balance = await publicClient.getBalance({
+  address: walletClient.account.address
+});
+console.log('Wallet Balance:', balance);
+```
+
+### 3. Initialize PancakeSwap Contracts with Viem
+
+```javascript
+import { getContract, parseAbi } from 'viem';
+
+// PancakeSwap Router V2 ABI (simplified)
+const PANCAKESWAP_ROUTER_V2_ABI = parseAbi([
+  'function WETH() external pure returns (address)',
+  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
+  'function swapTokensForExactTokens(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
+  'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)',
+  'function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts)'
+]);
+
+// PancakeSwap Factory ABI (simplified)
+const PANCAKESWAP_FACTORY_ABI = parseAbi([
+  'function getPair(address tokenA, address tokenB) external view returns (address pair)',
+  'function allPairs(uint) external view returns (address pair)',
+  'function allPairsLength() external view returns (uint)',
+  'function createPair(address tokenA, address tokenB) external returns (address pair)'
+]);
+
+// Initialize contracts with Viem
+const pancakeRouterV2 = getContract({
+  address: process.env.PANCAKESWAP_ROUTER_V2,
+  abi: PANCAKESWAP_ROUTER_V2_ABI,
+  client: publicClient
+});
+
+const pancakeFactoryV2 = getContract({
+  address: process.env.PANCAKESWAP_FACTORY_V2,
+  abi: PANCAKESWAP_FACTORY_ABI,
+  client: publicClient
+});
+
+// For write operations, use wallet client
+const pancakeRouterV2Write = getContract({
+  address: process.env.PANCAKESWAP_ROUTER_V2,
+  abi: PANCAKESWAP_ROUTER_V2_ABI,
+  client: walletClient
+});
+```
+
+## Viem Migration Guide
+
+### Key Differences from Ethers.js
+
+1. **Client-based Architecture**: Viem uses clients instead of providers
+2. **Enhanced TypeScript**: Built-in TypeScript support with better type inference
+3. **Simplified API**: More intuitive and cleaner API methods
+4. **Performance Optimizations**: Better performance and smaller bundle size
+5. **Modern Standards**: Follows modern JavaScript/TypeScript patterns
+
+### Quick Migration Reference
+
+| Ethers.js | Viem | Notes |
+|-----------|------|-------|
+| `new ethers.providers.JsonRpcProvider()` | `createPublicClient()` | Public client for read operations |
+| `new ethers.Wallet()` | `createWalletClient()` | Wallet client for write operations |
+| `provider.getBalance()` | `publicClient.getBalance()` | Same method, different client |
+| `wallet.sendTransaction()` | `walletClient.sendTransaction()` | Same method, different client |
+| `ethers.utils.parseEther()` | `parseEther()` | Direct import from viem |
+| `ethers.utils.formatEther()` | `formatEther()` | Direct import from viem |
+
+### Viem-Specific Features
+
+- **Built-in BSC Support**: Native BSC chain configuration
+- **Type-safe Contract Calls**: Enhanced contract interaction types
+- **Better Error Handling**: More descriptive error messages
+- **Optimized Batching**: Efficient batch request handling
+- **WebSocket Support**: Built-in WebSocket for real-time updates
+
+### Migration Example: Environment Setup
+
+#### Before (Ethers.js)
 ```javascript
 import { ethers } from 'ethers';
 
-// Mainnet BSC
 const bscProvider = new ethers.providers.JsonRpcProvider(
   process.env.BSC_RPC_URL,
   {
@@ -86,76 +228,59 @@ const bscProvider = new ethers.providers.JsonRpcProvider(
   }
 );
 
-// Testnet BSC
-const bscTestnetProvider = new ethers.providers.JsonRpcProvider(
-  process.env.BSC_RPC_URL_TESTNET,
-  {
-    name: 'bsc-testnet',
-    chainId: parseInt(process.env.BSC_CHAIN_ID_TESTNET),
-    ensAddress: null
-  }
-);
-
-// WebSocket Provider for real-time updates
-const bscWebSocketProvider = new ethers.providers.WebSocketProvider(
-  'wss://bsc-ws-node.nariox.org:443'
-);
-```
-
-### 2. Setup Wallet
-
-```javascript
-import { ethers } from 'ethers';
-
-// From private key
 const wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, bscProvider);
-
-// From mnemonic
-const mnemonicWallet = ethers.Wallet.fromMnemonic(
-  process.env.MNEMONIC,
-  "m/44'/60'/0'/0/0"
-);
-const connectedWallet = mnemonicWallet.connect(bscProvider);
-
-// Get wallet information
-console.log('Wallet Address:', wallet.address);
-console.log('Wallet Balance:', await wallet.getBalance());
 ```
 
-### 3. Initialize PancakeSwap Contracts
-
+#### After (Viem)
 ```javascript
-import { ethers } from 'ethers';
+import { createPublicClient, createWalletClient, http } from 'viem';
+import { bsc, bscTestnet } from 'viem/chains';
+import { mnemonicToAccount } from 'viem/accounts';
 
-// PancakeSwap Router V2 ABI (simplified)
-const PANCAKESWAP_ROUTER_V2_ABI = [
-  'function WETH() external pure returns (address)',
-  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function swapTokensForExactTokens(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)',
-  'function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts)'
-];
+// Public client for read operations
+const publicClient = createPublicClient({
+  chain: bsc,
+  transport: http(process.env.BSC_RPC_URL)
+});
 
-// PancakeSwap Factory ABI (simplified)
-const PANCAKESWAP_FACTORY_ABI = [
-  'function getPair(address tokenA, address tokenB) external view returns (address pair)',
-  'function allPairs(uint) external view returns (address pair)',
-  'function allPairsLength() external view returns (uint)',
-  'function createPair(address tokenA, address tokenB) external returns (address pair)'
-];
+// Wallet client for write operations
+const account = mnemonicToAccount(process.env.MNEMONIC);
+const walletClient = createWalletClient({
+  account,
+  chain: bsc,
+  transport: http(process.env.BSC_RPC_URL)
+});
+```
 
-// Initialize contracts
-const pancakeRouterV2 = new ethers.Contract(
-  process.env.PANCAKESWAP_ROUTER_V2,
-  PANCAKESWAP_ROUTER_V2_ABI,
-  bscProvider
+### Migration Example: Contract Interaction
+
+#### Before (Ethers.js)
+```javascript
+const contract = new ethers.Contract(
+  contractAddress,
+  abi,
+  wallet
 );
 
-const pancakeFactoryV2 = new ethers.Contract(
-  process.env.PANCAKESWAP_FACTORY_V2,
-  PANCAKESWAP_FACTORY_ABI,
-  bscProvider
-);
+const result = await contract.someFunction(param1, param2);
+```
+
+#### After (Viem)
+```javascript
+const result = await walletClient.writeContract({
+  address: contractAddress,
+  abi,
+  functionName: 'someFunction',
+  args: [param1, param2]
+});
+
+// For read operations
+const readResult = await publicClient.readContract({
+  address: contractAddress,
+  abi,
+  functionName: 'viewFunction',
+  args: [param1]
+});
 ```
 
 ## BSC Network Configuration
@@ -207,56 +332,65 @@ const BSC_CONFIG = {
 };
 ```
 
-### Gas Optimization
+### Gas Optimization with Viem
 
 ```javascript
-class BSCGasOptimizer {
-  constructor(provider) {
-    this.provider = provider;
+class BSCGasOptimizerViem {
+  constructor(publicClient, walletClient) {
+    this.publicClient = publicClient;
+    this.walletClient = walletClient;
   }
 
   async getOptimalGasPrice() {
     try {
-      // Get current gas price
-      const feeData = await this.provider.getFeeData();
+      // Get current gas price with Viem
+      const gasPrice = await this.publicClient.getGasPrice();
 
-      // BSC-specific optimization
-      const standardGasPrice = feeData.gasPrice;
-      const optimizedGasPrice = standardGasPrice.mul(90).div(100); // 10% discount
+      // BSC-specific optimization (10% discount)
+      const optimizedGasPrice = (gasPrice * 90n) / 100n;
 
-      return Math.max(
-        optimizedGasPrice.toNumber(),
-        parseInt(BSC_CONFIG.gasPrice.standard)
-      );
+      return gasPrice; // Return bigint for Viem compatibility
     } catch (error) {
       console.error('Failed to get optimal gas price:', error);
-      return parseInt(BSC_CONFIG.gasPrice.standard);
+      return BigInt(BSC_CONFIG.gasPrice.standard);
     }
   }
 
   async estimateGasWithBuffer(transaction, bufferPercent = 20) {
     try {
-      const gasEstimate = await this.provider.estimateGas(transaction);
-      const buffer = gasEstimate.mul(bufferPercent).div(100);
-      return gasEstimate.add(buffer);
+      const gasEstimate = await this.publicClient.estimateGas(transaction);
+      const buffer = (gasEstimate * BigInt(bufferPercent)) / 100n;
+      return gasEstimate + buffer;
     } catch (error) {
       console.error('Gas estimation failed:', error);
-      return BSC_CONFIG.gasLimit.contractInteraction;
+      return BigInt(BSC_CONFIG.gasLimit.contractInteraction);
     }
+  }
+
+  async prepareTransaction(transaction) {
+    const gasLimit = await this.estimateGasWithBuffer(transaction);
+    const gasPrice = await this.getOptimalGasPrice();
+
+    return {
+      ...transaction,
+      gas: gasLimit,
+      gasPrice: gasPrice
+    };
   }
 }
 ```
 
 ## PancakeSwap Integration
 
-### Token Swap Implementation
+### Token Swap Implementation with Viem
 
 ```javascript
-class PancakeSwapTrader {
-  constructor(routerContract, wallet) {
+class PancakeSwapTraderViem {
+  constructor(routerContract, publicClient, walletClient) {
     this.router = routerContract;
-    this.wallet = wallet;
-    this.gasOptimizer = new BSCGasOptimizer(wallet.provider);
+    this.publicClient = publicClient;
+    this.walletClient = walletClient;
+    this.gasOptimizer = new BSCGasOptimizerViem(publicClient, walletClient);
   }
 
   async swapExactTokensForTokens(
@@ -270,16 +404,15 @@ class PancakeSwapTrader {
       // Create path
       const path = [tokenIn.address, tokenOut.address];
 
-      // Get expected output amount
-      const amounts = await this.router.getAmountsOut(amountIn, path);
-      const amountOutMin = amounts[1].mul(100 - slippageTolerancePercent).div(100);
+      // Get expected output amount using Viem
+      const amounts = await this.router.read.getAmountsOut([amountIn, path]);
+      const amountOutMin = (amounts[1] * BigInt(100 - slippageTolerancePercent)) / 100n;
 
       // Set deadline (20 minutes from now)
       const deadline = Math.floor(Date.now() / 1000) + 1200;
 
-      // Estimate gas
-      const gasEstimate = await this.gasOptimizer.estimateGasWithBuffer({
-        from: this.wallet.address,
+      // Prepare transaction with gas optimization
+      const transaction = await this.gasOptimizer.prepareTransaction({
         to: this.router.address,
         data: this.router.interface.encodeFunctionData(
           'swapExactTokensForTokens',
@@ -287,26 +420,22 @@ class PancakeSwapTrader {
         )
       });
 
-      // Get optimal gas price
-      const gasPrice = await this.gasOptimizer.getOptimalGasPrice();
+      // Execute transaction using Viem
+      const transactionHash = await this.walletClient.writeContract({
+        address: this.router.address,
+        abi: this.router.abi,
+        functionName: 'swapExactTokensForTokens',
+        args: [amountIn, amountOutMin, path, recipient, deadline],
+        gas: transaction.gas,
+        gasPrice: transaction.gasPrice
+      });
 
-      // Execute transaction
-      const tx = await this.wallet.swapExactTokensForTokens(
-        amountIn,
-        amountOutMin,
-        path,
-        recipient,
-        deadline,
-        {
-          gasLimit: gasEstimate,
-          gasPrice: gasPrice
-        }
-      );
+      console.log('Swap transaction sent:', transactionHash);
 
-      console.log('Swap transaction sent:', tx.hash);
-
-      // Wait for confirmation
-      const receipt = await tx.wait();
+      // Wait for confirmation using Viem
+      const receipt = await this.publicClient.waitForTransactionReceipt({
+        hash: transactionHash
+      });
       console.log('Swap confirmed:', receipt.transactionHash);
 
       return {
@@ -1052,4 +1181,160 @@ class MEVProtection {
 }
 ```
 
-This comprehensive integration guide covers all the essential aspects of integrating with BSC and PancakeSwap. Make sure to adapt the code examples to your specific use case and always test thoroughly before deploying to production.
+## Migration from Ethers.js to Viem
+
+### Complete Migration Example
+
+This section provides a comprehensive example of migrating a complete BSC integration from Ethers.js to Viem.
+
+#### Before: Ethers.js Implementation
+
+```javascript
+import { ethers } from 'ethers';
+
+class BSCIntegration {
+  constructor() {
+    this.provider = new ethers.providers.JsonRpcProvider(
+      process.env.BSC_RPC_URL,
+      { chainId: 56, name: 'bsc' }
+    );
+    this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY, this.provider);
+  }
+
+  async getTokenBalance(tokenAddress, userAddress) {
+    const tokenContract = new ethers.Contract(
+      tokenAddress,
+      ['function balanceOf(address) view returns (uint256)'],
+      this.provider
+    );
+    const balance = await tokenContract.balanceOf(userAddress);
+    return ethers.utils.formatEther(balance);
+  }
+
+  async swapTokens(tokenIn, tokenOut, amountIn) {
+    const router = new ethers.Contract(
+      process.env.PANCAKE_ROUTER,
+      ['function swapExactTokensForTokens(uint,uint,address[],address,uint)'],
+      this.wallet
+    );
+
+    const amountOutMin = 0;
+    const path = [tokenIn, tokenOut];
+    const deadline = Math.floor(Date.now() / 1000) + 1200;
+
+    const tx = await router.swapExactTokensForTokens(
+      amountIn,
+      amountOutMin,
+      path,
+      this.wallet.address,
+      deadline
+    );
+
+    return await tx.wait();
+  }
+}
+```
+
+#### After: Viem Implementation
+
+```javascript
+import { createPublicClient, createWalletClient, http, parseEther, formatEther } from 'viem';
+import { bsc } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
+import { getContract, parseAbi } from 'viem';
+
+class BSCIntegrationViem {
+  constructor() {
+    // Public client for read operations
+    this.publicClient = createPublicClient({
+      chain: bsc,
+      transport: http(process.env.BSC_RPC_URL)
+    });
+
+    // Wallet client for write operations
+    const account = privateKeyToAccount(process.env.PRIVATE_KEY);
+    this.walletClient = createWalletClient({
+      account,
+      chain: bsc,
+      transport: http(process.env.BSC_RPC_URL)
+    });
+  }
+
+  async getTokenBalance(tokenAddress, userAddress) {
+    const tokenContract = getContract({
+      address: tokenAddress,
+      abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
+      client: this.publicClient
+    });
+
+    const balance = await tokenContract.read.balanceOf([userAddress]);
+    return formatEther(balance);
+  }
+
+  async swapTokens(tokenIn, tokenOut, amountIn) {
+    const router = getContract({
+      address: process.env.PANCAKE_ROUTER,
+      abi: parseAbi(['function swapExactTokensForTokens(uint,uint,address[],address,uint)']),
+      client: this.walletClient
+    });
+
+    const amountOutMin = 0n;
+    const path = [tokenIn, tokenOut];
+    const deadline = Math.floor(Date.now() / 1000) + 1200;
+
+    const transactionHash = await router.write.swapExactTokensForTokens([
+      amountIn,
+      amountOutMin,
+      path,
+      this.walletClient.account.address,
+      deadline
+    ]);
+
+    return await this.publicClient.waitForTransactionReceipt({
+      hash: transactionHash
+    });
+  }
+}
+```
+
+### Migration Benefits
+
+1. **Type Safety**: Viem provides better TypeScript support out of the box
+2. **Performance**: Optimized RPC calls and reduced bundle size
+3. **Modern API**: Cleaner, more intuitive methods
+4. **Built-in BSC Support**: Native chain configurations
+5. **Better Error Handling**: More descriptive error messages
+
+### Migration Checklist
+
+- [ ] Replace `ethers.providers.JsonRpcProvider` with `createPublicClient`
+- [ ] Replace `ethers.Wallet` with `createWalletClient`
+- [ ] Update contract initialization to use `getContract`
+- [ ] Replace BigNumber operations with native BigInt
+- [ ] Update utility functions (`parseEther`, `formatEther`)
+- [ ] Modify transaction methods to use new Viem patterns
+- [ ] Update error handling for Viem-specific error types
+- [ ] Test all functionality thoroughly
+- [ ] Update test suites to use Viem testing utilities
+
+### Testing Migration
+
+```javascript
+// Viem testing example
+import { test, expect } from 'vitest';
+import { createPublicClient, http, parseEther } from 'viem';
+import { bsc } from 'viem/chains';
+
+test('Viem BSC integration', async () => {
+  const client = createPublicClient({
+    chain: bsc,
+    transport: http()
+  });
+
+  const blockNumber = await client.getBlockNumber();
+  expect(typeof blockNumber).toBe('bigint');
+  expect(blockNumber).toBeGreaterThan(0n);
+});
+```
+
+This comprehensive integration guide covers all the essential aspects of integrating with BSC and PancakeSwap using Viem. The migration from Ethers.js provides significant benefits in terms of type safety, performance, and developer experience. Make sure to adapt the code examples to your specific use case and always test thoroughly before deploying to production.

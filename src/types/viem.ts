@@ -1,13 +1,11 @@
 import {
   PublicClient,
   WalletClient,
-  Contract,
   Address,
   Hash,
   BlockNumber,
   BlockTag,
   Chain,
-  Account,
   Transport
 } from 'viem';
 import { Abi } from 'viem';
@@ -343,15 +341,15 @@ export interface ContractWriteParams<T extends readonly unknown[]> extends Contr
 export interface TransferEventFilter extends ViemEventFilter {
   topics: [
     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer event signature
-    (string | string[] | null)?,
-    (string | string[] | null)?
+    string | string[] | null | undefined,
+    string | string[] | null | undefined
   ];
 }
 
 export interface SwapEventFilter extends ViemEventFilter {
   topics: [
     '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822', // Swap event signature
-    (string | string[] | null)?
+    string | string[] | null | undefined
   ];
 }
 
@@ -473,26 +471,8 @@ export interface ViemConfig {
 }
 
 export default {
-  // Types
-  ViemClient,
-  ViemWalletClient,
-  ViemContract,
-
-  // Contract interfaces
-  PancakeSwapRouter,
-  PancakeSwapPair,
-  ERC20Contract,
-
-  // Contract types collection
-  BSCContractTypes,
-
   // ABIs
   PANCAKESWAP_ROUTER_ABI,
   PANCAKESWAP_PAIR_ABI,
   ERC20_ABI,
-
-  // Utilities
-  BSCAddress,
-  BSCHash,
-  BSCBlockNumber,
 };

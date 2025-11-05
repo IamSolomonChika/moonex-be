@@ -1,0 +1,113 @@
+# 🚀 Viem-Optimized Dockerfile
+# Multi-stage build optimized for Viem 2.38.5 deployment
+
+# Build stage
+FROM node:22-alpine AS builder
+
+# Set build arguments
+ARG NODE_ENV=production
+ARG VIEM_VERSION=2.38.5
+ARG PNPM_VERSION=10.18.1
+
+# Install pnpm
+RUN npm install -g pnpm@${PNPM_VERSION}
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --prod=false
+
+# Copy source code
+COPY . .
+
+# Validate Viem installation
+RUN echo "🔍 Validating Viem ${VIEM_VERSION} installation..." && \
+    pnpm list viem && \
+    node -e "console.log('✅ Viem version:', require('./package.json').dependencies.viem)"
+
+# Check for ethers.js (should not exist)
+RUN echo "🔍 Checking for ethers.js dependencies..." && \
+    if pnpm list ethers 2>/dev/null; then \
+        echo "❌ Ethers.js dependency found - should be removed" && exit 1; \
+    else \
+        echo "✅ No ethers.js dependencies found"; \
+    fi
+
+# Validate configuration files
+RUN echo "🔍 Validating configuration files..." && \
+    test -f "./viem.config.js" || (echo "❌ Viem config not found" && exit 1) && \
+    test -f "./src/config/bsc.ts" || (echo "❌ BSC config not found" && exit 1) && \
+    echo "✅ Configuration files validated"
+
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Build application
+RUN echo "🏗️  Building application..." && \
+    NODE_ENV=${NODE_ENV} pnpm build:production
+
+# Production stage
+FROM node:22-alpine AS production
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV VIEM_VERSION=2.38.5
+
+# Install security updates
+RUN apk update && apk upgrade && \
+    apk add --no-cache dumb-init curl && \
+    rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S moonex -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm in production
+RUN npm install -g pnpm@10.18.1
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install only production dependencies
+RUN echo "📦 Installing production dependencies..." && \
+    pnpm install --frozen-lockfile --prod
+
+# Validate Viem in production
+RUN echo "🔍 Validating Viem in production..." && \
+    pnpm list viem && \
+    node -e "console.log('✅ Viem validated for production')"
+
+# Copy built application from builder stage
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+
+# Copy configuration and scripts
+COPY viem.config.js ./
+COPY scripts/deploy-viem.js ./scripts/
+COPY scripts/rollback-viem.js ./scripts/
+
+# Set ownership
+RUN chown -R moonex:nodejs /app
+USER moonex
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default command
+CMD ["node", "build/index.js"]

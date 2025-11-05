@@ -4,12 +4,11 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { tokenRoutes } from './tokens.js';
+import tokenRoutes from './tokens.js';
 import { tradingRoutes } from './trading.js';
 import { liquidityRoutes } from './liquidity.js';
-// import { yieldRoutes } from './yield.js'; // Temporarily excluded due to compilation errors
 import { portfolioRoutes } from './portfolio.js';
-import logger from '../../utils/logger.js';
+import logger from '../utils/logger';
 
 /**
  * Register all BSC routes
@@ -34,10 +33,7 @@ export async function bscRoutes(fastify: FastifyInstance) {
 
   // Add health check for BSC services
   fastify.get('/health', {
-    schema: {
-      description: 'BSC services health check',
-      tags: ['bsc', 'health']
-    }
+    schema: {}
   }, async (request, reply) => {
     try {
       const healthChecks = await Promise.allSettled([

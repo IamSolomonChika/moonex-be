@@ -3,7 +3,7 @@
  * Enhanced configurations and constants for BSC contracts using Viem
  */
 
-import { Address, Hex, Chain } from 'viem';
+import { Address } from 'viem';
 import { BSC_CHAIN, BSC_TESTNET_CHAIN, VIEM_CONFIG } from '../../config/viem';
 import logger from '../../utils/logger';
 

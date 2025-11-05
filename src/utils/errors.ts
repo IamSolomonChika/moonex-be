@@ -145,7 +145,7 @@ export const errorHandler = (error: Error, request: any, reply: any) => {
 /**
  * 404 handler for unknown routes
  */
-export const notFoundHandler = (request: any, reply: any) => {
+export const notFoundHandler = (_request: any, reply: any) => {
   reply.code(StatusCodes.NOT_FOUND).send(
     createErrorResponse(
       new ApiError('Route not found', StatusCodes.NOT_FOUND, ErrorCodes.NOT_FOUND)
@@ -156,7 +156,7 @@ export const notFoundHandler = (request: any, reply: any) => {
 /**
  * Validation error helper
  */
-export const createValidationError = (message: string, details?: any): ApiError => {
+export const createValidationError = (message: string, _details?: any): ApiError => {
   return new ApiError(message, StatusCodes.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR);
 };
 

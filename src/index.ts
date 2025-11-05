@@ -6,11 +6,11 @@ import { authRoutes } from './routes/auth';
 import { walletRoutes } from './routes/wallets';
 import { tradingRoutes } from './routes/trading';
 import { liquidityRoutes } from './routes/liquidity';
-import { yieldRoutes } from './routes/yield';
+// import { yieldRoutes } from './routes/yield'; // Temporarily disabled
 import { governanceRoutes } from './routes/governance';
 // import { governanceCompleteRoutes } from './routes/governance-complete'; // Temporarily commented due to TypeScript errors
 import { limitOrderRoutes } from './routes/limit-orders';
-// import { bscRoutes } from './routes/bsc/index.js'; // Temporarily excluded due to compilation issues
+import { bscRoutes } from './routes/index.js'; // BSC routes for production
 // import { stopLossRoutes } from './routes/stop-loss'; // Temporarily commented due to auth errors
 // import { tradingBotRoutes } from './routes/trading-bots'; // Temporarily commented due to auth errors
 // import { tradingBotGenericRoutes } from './routes/trading-bots-generic'; // Temporarily commented due to syntax errors
@@ -80,7 +80,7 @@ fastify.register(async (fastify) => {
 fastify.register(async (fastify) => {
   fastify.addHook('preHandler', rateLimitApi);
   fastify.addHook('preHandler', sanitizeGeneralInput);
-  await fastify.register(yieldRoutes, { prefix: '/api/v1/yield' });
+  // await fastify.register(yieldRoutes, { prefix: '/api/v1/yield' }); // Temporarily disabled
 });
 
 fastify.register(async (fastify) => {
@@ -95,12 +95,12 @@ fastify.register(async (fastify) => {
   await fastify.register(limitOrderRoutes, { prefix: '/api/v1/limit-orders' });
 });
 
-// Register BSC routes with standard protection (temporarily excluded)
-// fastify.register(async (fastify) => {
-//   fastify.addHook('preHandler', rateLimitApi);
-//   fastify.addHook('preHandler', sanitizeGeneralInput);
-//   await fastify.register(bscRoutes, { prefix: '/api/v1/bsc' });
-// });
+// Register BSC routes with standard protection
+fastify.register(async (fastify) => {
+  fastify.addHook('preHandler', rateLimitApi);
+  fastify.addHook('preHandler', sanitizeGeneralInput);
+  await fastify.register(bscRoutes, { prefix: '/api/v1/bsc' });
+});
 
 // Commented routes would also need middleware when re-enabled
 // fastify.register(governanceCompleteRoutes, { prefix: '/api/v1/governance-complete' });

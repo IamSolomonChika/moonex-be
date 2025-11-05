@@ -1,0 +1,271 @@
+# ⚡ Artillery Load Testing Configuration
+# Performance testing configuration for Viem 2.38.5 staging deployment
+
+config:
+  # Target deployment
+  target: 'http://localhost:3000'
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      rampTo: 20
+      name: 'Warm up phase'
+
+    # Load testing phase
+    - duration: 120
+      arrivalRate: 20
+      rampTo: 100
+      name: 'Load testing phase'
+
+    # Peak load phase
+    - duration: 60
+      arrivalRate: 100
+      rampTo: 200
+      name: 'Peak load phase'
+
+    # Spike testing phase
+    - duration: 30
+      arrivalRate: 200
+      name: 'Spike testing phase'
+
+  # Scenarios
+  scenarios:
+    - name: 'Viem BSC Token Info Load Test'
+      requests:
+        - method: 'GET'
+          url: '/api/tokens/info/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+          headers:
+            Content-Type: 'application/json'
+          match:
+            - json:
+                success: true
+                data:
+                  address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+                  symbol: 'WBNB'
+                  decimals: 18
+                  name: 'Wrapped BNB'
+                  totalSupply: *number
+
+    - name: 'Viem Swap Quote Load Test'
+      requests:
+        - method: 'POST'
+          url: '/api/swap/quote'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            tokenIn: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+            tokenOut: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+            amountIn: '1000000000000000000'
+            slippageTolerancePercent: 0.5
+          match:
+            - json:
+                success: true
+                data:
+                  tokenIn:
+                    address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+                  tokenOut:
+                    address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+                  amountIn: '1000000000000000000'
+                  amountOut: *number
+                  slippageTolerancePercent: 0.5
+
+    - name: 'Viem Liquidity Info Load Test'
+      requests:
+        - method: 'POST'
+          url: '/api/liquidity/info'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            tokenA: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+            tokenB: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+            amountA: '1000000000000000000'
+            amountB: '31545000000000000000'
+          match:
+            - json:
+                success: true
+                data:
+                  reserves: *number
+
+    - name: 'Viem Farming Pools Load Test'
+      requests:
+        - method: 'GET'
+          url: '/api/farming/pools'
+          match:
+            - json:
+                success: true
+                data: *array
+
+    - name: 'Viem Yield Info Load Test'
+      requests:
+        - method: 'POST'
+          url: '/api/farming/yield'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            poolAddress: '0x73feaa1e3f5c5c9a2ce9e2b7d33c66603'
+            amount: '1000000000000000000'
+          match:
+            - json:
+                success: true
+                data:
+                  estimatedReward: *number
+
+    - name: 'Viem BSC Status Load Test'
+      requests:
+        - method: 'GET'
+          url: '/api/bsc/status'
+          match:
+            - json:
+                success: true
+                data:
+                  chainId: 56
+                  blockNumber: *number
+                  isHealthy: true
+
+    - name: 'Viem Health Check Load Test'
+      requests:
+        - method: 'GET'
+          url: '/health'
+          match:
+            - status: 200
+            - json:
+                status: 'healthy'
+                timestamp: *string
+                uptime: *number
+
+    - name: 'Concurrent Token Info Load Test'
+      requests:
+        - method: 'GET'
+          url: '/api/tokens/info/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+          headers:
+            Content-Type: 'application/json'
+          weight: 20  # Higher weight for frequently called endpoint
+          match:
+            - json:
+                success: true
+
+    - name: 'Concurrent Swap Quote Load Test'
+      requests:
+        - method: 'POST'
+          url: '/api/swap/quote'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            tokenIn: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+            tokenOut: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+            amountIn: '1000000000000000000'
+            slippageTolerancePercent: 0.5
+          weight: 25  # Higher weight for critical trading endpoint
+          match:
+            - json:
+                success: true
+
+    - name: 'API Rate Limiting Test'
+      requests:
+        - method: 'GET'
+          url: '/api/tokens/info/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+          headers:
+            Content-Type: 'application/json'
+          # Expect some 429 responses for rate limiting
+          think: 0
+          capture:
+            - json:
+                statusCode: 429
+                error: 'Rate limit exceeded'
+          weight: 5
+
+    - name: 'Large Payload Test'
+      requests:
+        - method: 'POST'
+          url: '/api/swap/quote'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            tokenIn: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+            tokenOut: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+            amountIn: '1000000000000000000'
+            slippageTolerancePercent: 0.5
+            # Add large additional data to test payload handling
+            additionalData: 'x'.repeat(10000)  # 10KB of additional data
+          weight: 10
+
+    - name: 'Invalid Input Test'
+      requests:
+        - method: 'POST'
+          url: '/api/swap/quote'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            tokenIn: 'invalid-address'
+            tokenOut: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+            amountIn: 'invalid-amount'
+          weight: 5
+          # Expect 400 responses for invalid input
+          capture:
+            - json:
+                statusCode: 400
+                error: *string
+                message: *string
+
+    - name: 'Database Performance Test'
+      requests:
+        - method: 'GET'
+          url: '/api/tokens/info/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+          headers:
+            Content-Type: 'application/json'
+          # This will test database caching and query performance
+          weight: 15
+          name: 'Database Performance Test'
+
+    - name: 'Viem RPC Performance Test'
+      requests:
+        - method: 'GET'
+          url: '/api/viem/rpc-test'
+          headers:
+            Content-Type: 'application/json'
+          json:
+            method: 'eth_blockNumber'
+            params: []
+            id: 1
+          weight: 20
+          match:
+            - json:
+                result: *string
+
+  # Variables for dynamic configuration
+  variables:
+    baseUrl: 'http://localhost:3000'
+    wbnbAddress: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+    busdAddress: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+    testAmount: '1000000000000000000'
+    farmPoolAddress: '0x73feaa1e3f5c5c9a2ce9e2b7d33c66603'
+
+  # Plugin configuration for custom metrics
+  plugins:
+    ensure:
+      condition:
+        - 'response.status == 200'
+    publish-metrics:
+      - type: 'console'
+        summary: true
+    metrics-by-endpoint:
+      - name: 'Response Times by Endpoint'
+        unit: 'ms'
+        cumulative: true
+    metrics-by-scenario:
+      - name: 'Scenario Performance'
+        unit: 'ms'
+        cumulative: true
+    metrics-for-percentiles:
+      - name: 'Response Time Percentiles'
+        percentile: 'p50'
+        unit: 'ms'
+    metrics-for-errors:
+      - name: 'Error Rate'
+        unit: '%'
+        metricName: 'error_rate'
+
+  # Processor configuration for custom processing
+  processor:
+    - name: 'Custom Metrics'
+        module: 'artillery/lib/custom-metrics'
