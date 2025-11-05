@@ -19,3 +19,4 @@ PRIVY_INTEGRATION.md
 
 # Generated Prisma files
 /src/generated/prisma
+dev.db
